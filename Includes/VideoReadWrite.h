@@ -27,3 +27,9 @@ void VideoWrite(VideoWriter &VideoWrite, VideoData &InputVideoData);
 
 //  Configures Input/Output files via json configuration file and returns the directory for input/output files
 std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile);
+
+//  This function serialises VideoData struct to JSON String and returns that sring
+std::string SerialiseVideoData(const VideoData &videodata);
+
+//  This function deserialises a JSON string which carries a VideoData struct, and returns this VideoData struct
+VideoData DeserialiseVideoData(const std::string &jsonString);

@@ -84,3 +84,49 @@ std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string
 
     return Result;
 }
+
+std::string SerialiseVideoData(const VideoData &videodata)
+{
+    //  json string object for serialisation
+    json jsonData;
+
+    //  Simple attributes of videoData struct
+    jsonData["frameSize"] = {videodata.frameSize.width, videodata.frameSize.height};
+    jsonData["frameSizeCaptured"] = videodata.frameSizeCaptured;
+
+    /*  Serialisation of frames to base64 strings   */
+    std::vector<std::string> base64Frames;  //  Container to store encoded video frames
+    for(const auto &frame : videodata.VideoFrames)
+    {
+        std::vector<uchar> buf; //  buffer uchar vector for storing frames temporarily in .jpg format
+        cv::imencode(".jpg", frame, buf);   //  opencv function for converting and storing the current frame in buf variable
+        std::string frame_base64encode(buf.begin(), buf.end()); //   convert uchar vector into std::string object
+        base64Frames.push_back(frame_base64encode); //  Adding the current frame into video frames container
+    }
+    jsonData["VideoFrames"] = base64Frames; //  Creating a VideoFrames attribute in json variable which contains a string with encoding of video frames
+
+    return jsonData.dump(); //  Dump the JSON data to a string
+
+}
+
+VideoData DeserialiseVideoData(const std::string &jsonString)
+{
+    VideoData receivedVideo;
+    json jsonData = json::parse(jsonString);    //  Parse the input JSON string into a json object
+
+    //  Deserialisation of simple attributes
+    receivedVideo.frameSize.width = jsonData["frameSize"][0];
+    receivedVideo.frameSize.height = jsonData["frameSize"][1];
+    receivedVideo.frameSizeCaptured = jsonData["frameSizeCaptured"];
+
+    /*  Deserialisation of video frames from base64 strings */
+    std::vector<std::string> base64Frames = jsonData["VideoFrames"];    //  Container to extract video frames from json stack
+    for(const auto &base64Frame : base64Frames)
+    {
+        std::vector<uchar> buf(base64Frame.begin(), base64Frame.end()); //  buffer uchar vector for storing read frames temporarily before decoding
+        cv::Mat decoded_frame = cv::imdecode(buf, cv::IMREAD_COLOR);    //  decode single frames from buffer container with color option from cv library
+        receivedVideo.VideoFrames.push_back(decoded_frame); //  insert decoded frames into VideoFrames container 
+    }
+
+    return receivedVideo;
+}
