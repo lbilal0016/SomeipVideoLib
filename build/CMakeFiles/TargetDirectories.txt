@@ -1,6 +1,0 @@
-/home/ubuntu1/SomeipLibProject/build/CMakeFiles/service.dir
-/home/ubuntu1/SomeipLibProject/build/CMakeFiles/Client.dir
-/home/ubuntu1/SomeipLibProject/build/CMakeFiles/edit_cache.dir
-/home/ubuntu1/SomeipLibProject/build/CMakeFiles/rebuild_cache.dir
-/home/ubuntu1/SomeipLibProject/build/_deps/nlohmann_json-build/CMakeFiles/edit_cache.dir
-/home/ubuntu1/SomeipLibProject/build/_deps/nlohmann_json-build/CMakeFiles/rebuild_cache.dir
