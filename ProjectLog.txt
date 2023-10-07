@@ -1,0 +1,420 @@
+===============================PROJECT LOG FROM 03Oct2023======================================
+/SomeipLibProject/
+---------------------------------
+    service.cpp:
+    ------------
+    #include <iomanip>
+    #include <iostream>
+    #include <sstream>
+
+    #include <vsomeip/vsomeip.hpp>
+
+    #include "Includes/ServiceLib.h"
+
+
+    std::shared_ptr <vsomeip::application> app;
+
+    int main()
+    {
+        app = vsomeip::runtime::get()->create_application("Server");
+        app->init();
+        app->register_message_handler(SAMPLE_SERVICE_ID,SAMPLE_INSTANCE_ID,SAMPLE_METHOD_ID, on_message);
+        app->offer_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);
+        set_application(app);   //  Added for compatibility when client functions are packed in another object code.
+        app->start();
+    }
+
+    Client.cpp:
+    -----------
+    #include <vsomeip/vsomeip.hpp>
+    #include <iostream>
+    #include <iomanip>
+    #include <sstream>
+
+    #include <condition_variable>
+    #include <thread>
+
+    #include "Includes/ClientLib.h"
+
+    std::shared_ptr< vsomeip::application > app;
+
+    int main() {
+
+        app = vsomeip::runtime::get()->create_application("Client");
+        app->init();
+        app->register_availability_handler(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID, on_availability);
+        app->request_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);
+        app->register_message_handler(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID, SAMPLE_METHOD_ID, on_message);
+        std::thread sender(run);
+        set_application(app);   //  Added for compatibility when client functions are packed in another object code.
+        app->start();
+    }
+
+    CMakeLists.txt:
+    ---------------
+    cmake_minimum_required (VERSION 3.10.2)
+
+    set (CMAKE_CXX_FLAGS "-g -std=c++0x")
+
+    find_package (vsomeip3 3.3.8 REQUIRED)
+    find_package( Boost 1.55 COMPONENTS system thread log REQUIRED )
+
+    include_directories (
+        ${Boost_INCLUDE_DIR}
+        ${VSOMEIP3_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Includes
+    )
+
+
+    add_executable(service ./service.cpp Includes/ServiceLib.cpp)
+    add_executable(Client ./Client.cpp Includes/ClientLib.cpp)
+    target_link_libraries(Client vsomeip3 ${Boost_LIBRARIES})
+    target_link_libraries(service vsomeip3 ${Boost_LIBRARIES})
+
+    configure_and_run_client.sh:
+    ---------------------------
+    _config_path="/home/ubuntu1/Levent_MasterProject/SOMEIP_Project/Training/vsomeip/Training_examples-e/4_1-RequestResponse_withIncludes/config_client"
+    export VSOMEIP_CONFIGURATION="$_config_path"
+    echo "$VSOMEIP_CONFIGURATION"
+    ./build/Client
+
+    configure_and_run_server.sh:
+    ---------------------------
+    sudo ip route add 224.224.224.245/32 dev enp0s3
+    sudo iptables -A INPUT -p udp -d 224.224.224.245 --dport 30490 -j ACCEPT
+    _config_path="/home/ubuntu1/Levent_MasterProject/SOMEIP_Project/Training/vsomeip/Training_examples-e/4_1-RequestResponse_withIncludes/config_server"
+    export VSOMEIP_CONFIGURATION="$_config_path"
+    echo "$VSOMEIP_CONFIGURATION"
+    ./build/service
+
+    build.sh:
+    --------
+    rm -r ./build/
+    mkdir -p build
+    cd build
+    cmake ..
+    make
+    cd ..
+
+    /SomeipLibProject/Includes/
+    ---------------------------
+        ClientLib.cpp:
+        -------------
+        #include "ClientLib.h"
+        #include <vsomeip/vsomeip.hpp>
+        #include <iostream>
+        #include <iomanip>
+        #include <sstream>
+
+        #include <condition_variable>
+        #include <thread>
+
+
+        //std::shared_ptr< vsomeip::application > app;
+        std::mutex mutex;
+        std::condition_variable condition;
+
+
+        //  This function passes the someip application object from the Client executable to this object code
+        static std::shared_ptr<vsomeip::application> this_app;
+        void set_application(std::shared_ptr<vsomeip::application> app)
+        {
+            this_app = app;
+        }
+
+        //  This function will be run on the client side after the service is offered
+        void run()
+        {
+            std::unique_lock<std::mutex> lock(mutex);
+            condition.wait(lock);
+
+            //  Creating the object for vsome request message
+            std::shared_ptr<vsomeip::message> request;
+            request = vsomeip::runtime::get()->create_request();
+            //  Setting service id, instance id, method id
+            request->set_service(SAMPLE_SERVICE_ID);
+            request->set_instance(SAMPLE_INSTANCE_ID);
+            request->set_method(SAMPLE_METHOD_ID);
+
+            //  Create and add payload to someip message object
+            std::shared_ptr<vsomeip::payload> its_payload = vsomeip::runtime::get()->create_payload();
+            //      Creating the vector to carry bytes
+            std::vector<vsomeip::byte_t> payload_data;
+
+            //      Filling the vector with random data (for training purposes)
+            for(vsomeip::byte_t i = 0; i<10; ++i)
+            {
+                payload_data.push_back(i % 256);
+            }
+
+            //      Loading the data vector to someip payload
+            its_payload->set_data(payload_data);
+            
+            //      Adding the payload to someip message
+            request->set_payload(its_payload);
+            this_app->send(request);
+        }
+
+        void on_message(const std::shared_ptr<vsomeip::message> &response)
+        {
+        std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();
+        vsomeip::length_t len = its_payload->get_length();
+
+        //  Get payload
+        std::stringstream ss;
+        for(vsomeip::length_t i = 0; i<len; ++i)
+        {
+            ss << std::setw(4)<<std::setfill('0') << std::hex
+            <<(int) *(its_payload->get_data() + i) << " ";
+        }
+
+        //  Print the received data
+        std::cout << "CLIENT: Received message with Client/Session ["
+        <<  std::setw(4) << std::setfill('0') << std::hex
+        <<  response->get_client() << "/"
+        <<  std::setw(4) << std::setfill('0') << std::hex
+        <<  response->get_session() << "]" << ss.str() << std::endl;
+        }
+
+        void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
+        {
+        //  Checking the availability of the service offered by the server
+        //	    std::setw(4) -> set the width of hexadecimal number to 4
+        //	    std::setfill(0) -> if the service id has less than 4 digits, fill the leading digits with 0s.
+        std::cout << "CLIENT: Service (Service.Instance) [" << std::setw(4) << std::setfill('0') << std::hex 
+        << Service << "." << Instance << "] is " << (is_available ? "available" : "NOT available") << std::endl;
+
+        //  Sending wake-up call for the waiting thread on the client side after the service is available
+        condition.notify_one();
+        }
+
+        ClientLib.h:
+        ------------
+        #ifndef CLIENTLIB
+        #define CLIENTLIB
+        //  INCLUDES
+        #include <vsomeip/vsomeip.hpp>
+        #include <iostream>
+        #include <iomanip>
+        #include <sstream>
+
+        #include <condition_variable>
+        #include <thread>
+
+
+        /*  DEFINES */
+        #define SAMPLE_SERVICE_ID 0x1777
+        #define SAMPLE_INSTANCE_ID 0x5677
+        #define SAMPLE_METHOD_ID 0x0421
+
+        void run();
+        void on_message(const std::shared_ptr<vsomeip::message> &response);
+        void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available);
+        void set_application(std::shared_ptr<vsomeip::application> app);
+
+
+        #endif
+
+        ServiceLib.cpp:
+        --------------
+        #include "ServiceLib.h"
+
+        #include <vsomeip/vsomeip.hpp>
+        #include <iostream>
+        #include <iomanip>
+        #include <sstream>
+
+        #include <condition_variable>
+        #include <thread>
+
+        //  This function passes the someip application object from the Client executable to this object code
+        static std::shared_ptr<vsomeip::application> this_app;
+        void set_application(std::shared_ptr<vsomeip::application> app)
+        {
+            this_app = app;
+        }
+
+        void on_message(const std::shared_ptr<vsomeip::message>& Request)
+        {
+            //  Reading the payload
+            std::shared_ptr<vsomeip::payload> its_payload = Request->get_payload();
+            //  Getting the payload length
+            vsomeip::length_t len = its_payload->get_length();
+
+            //  Getting the payload
+            std::stringstream ss;
+            //  This initiates a loop that iterates over each byte of the payload.
+            for(vsomeip::length_t i=0; i<len; ++i)
+            {
+                ss << std::setw(2) << std::setfill('0') << std::hex
+                //  its_payload->get_data() returns a pointer to the start of the payload data
+                //  << " ";: A space is added after each formatted hexadecimal value to separate them in the final string.
+                <<(int)*(its_payload->get_data()+i) << " "; 
+            }
+
+            std::cout << "SERVICE: Received message with Client/Session [ "
+            << std::setw(4) << std::setfill('0') << std::hex << Request->get_client() << "/"
+            << std::setw(4) << std::setfill('0') << std::hex << Request->get_session() << "]"
+            << ss.str() << std::endl;
+
+            //  Create Response:
+            //      Creating a vsomeip::message object
+            //          vsomeip::runtime::get() returns an instance of a vsomeip::runtime class for the first call
+            //          in all the following calls, it returns the same pointer to the runnint vsomeip::runtime instance
+            //          ->create_response() is a method within vsomeip::runtime class. 
+            std::shared_ptr<vsomeip::message> its_response = vsomeip::runtime::get()->create_response(Request);
+            //      Refilling the its_payload object
+            its_payload = vsomeip::runtime::get()->create_payload();
+            std::vector<vsomeip::byte_t> payload_data;
+            for (int i=9; i>=0; --i)
+            {
+                payload_data.push_back(i%256);
+            }
+            its_payload->set_data(payload_data);
+            its_response->set_payload(its_payload);
+            this_app->send(its_response);
+        }
+
+        ServiceLib.h:
+        -------------
+        #ifndef SERVICELIB
+        #define SERVICELIB
+        //  INCLUDES
+        #include <vsomeip/vsomeip.hpp>
+        #include <iostream>
+        #include <iomanip>
+        #include <sstream>
+
+        #include <condition_variable>
+        #include <thread>
+
+        /*  DEFINES */
+        #define SAMPLE_SERVICE_ID 0x1777
+        #define SAMPLE_INSTANCE_ID 0x5677
+        #define SAMPLE_METHOD_ID 0x0421
+
+        void on_message(const std::shared_ptr<vsomeip::message>& Request);
+        void set_application(std::shared_ptr<vsomeip::application> app);
+
+        #endif
+
+        VideoReadWrite.h:
+        ----------------
+        #pragma once
+        #include "opencv4/opencv2/opencv.hpp"
+        #include <iostream>
+        #include <fstream>
+        #include <vector>
+        #include <stdexcept>
+        #include <string.h>
+        #include <nlohmann/json.hpp>
+
+        using VideoCapture = cv::VideoCapture;
+        using VideoWriter = cv::VideoWriter;
+        using json = nlohmann::json;
+
+        typedef struct VideoData
+        {
+            std::vector<cv::Mat> VideoFrames;
+            cv::Mat SingleFrame;
+            cv::Size frameSize;
+            bool frameSizeCaptured;
+        }VideoData;
+
+        //  Reads the video capture object in the first argument into the second argument struct
+        void VideoRead(VideoCapture &VideoCap, VideoData &InputVideoData);
+
+        //  Writes the second argument of video data struct into the first argument of videowriter object
+        void VideoWrite(VideoWriter &VideoWrite, VideoData &InputVideoData);
+
+        //  Configures Input/Output files via json configuration file and returns the directory for input/output files
+        std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile);
+
+        VideoReadWrite.cpp:
+        ------------------
+        #include "opencv4/opencv2/opencv.hpp"
+        #include <iostream>
+        #include <fstream>
+        #include <vector>
+        #include <stdexcept>
+        #include <string.h>
+
+        #include "VideoReadWrite.h"
+        #include <nlohmann/json.hpp>
+
+        void VideoRead(VideoCapture &VideoCap, VideoData &InputVideoData)
+        {
+            //  Checking against opening the file
+            if(!VideoCap.isOpened()){
+                std::cerr << "Error: Video file could not be opened.\n";
+                throw std::runtime_error("Error: Video file read is not successful.\n");
+            }   //else{std::cout << "Video file opened successfully.\n";}
+
+            InputVideoData.frameSizeCaptured = false;   //  This flag will be set to 1 once the first frame size is captured
+            while(VideoCap.read(InputVideoData.SingleFrame)){
+                InputVideoData.VideoFrames.push_back(InputVideoData.SingleFrame.clone());
+
+                //  Saving the frame size for once
+                if(!InputVideoData.frameSizeCaptured){
+                    InputVideoData.frameSize = InputVideoData.SingleFrame.size();
+                    InputVideoData.frameSizeCaptured = true;    //  First video frame size is captured
+                }
+            }
+        }
+
+        void VideoWrite(VideoWriter &VideoWrite, VideoData &InputVideoData)
+        {
+            //  Checking against the createability of output file
+            if(!VideoWrite.isOpened()){
+                std::cerr << "Error: Creating an output video file is not successful.\n";
+                throw std::runtime_error("Error: Video file write is not successful.\n");
+            }//else{std::cout << "Creating the output video file is successful.\n";}
+
+            //  Writing the output file
+            std::cout << "Writing the output ...\n";
+            for(const cv::Mat &frame : InputVideoData.VideoFrames){
+                VideoWrite.write(frame);
+            }
+            std::cout << "Output file is written.\n";
+        }
+
+        std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile)
+        {      
+            std::string Result;
+            //  Configure input
+            if(typeInputOutput.compare("Input") == 0)
+            {
+                json inputConfig;
+                std::ifstream inputConfigFile(ConfigFile);
+                if(!inputConfigFile.is_open())
+                {
+                    std::cerr << "Error: Failed to open input configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+                    throw std::runtime_error("Error: Configuration file could not be opened.\n");
+                }
+                inputConfigFile >> inputConfig;
+                inputConfigFile.close();
+
+                Result = inputConfig["InputFile"];
+            }
+            //  Configure Output   
+            else if(typeInputOutput.compare("Output") == 0){
+                json outputConfig;
+                std::ifstream outputConfigFile(ConfigFile);
+                if(!outputConfigFile.is_open())
+                {
+                    std::cerr << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+                    throw std::runtime_error("Error: Configuration file could not be opened.\n");
+                }
+                outputConfigFile >> outputConfig;
+                outputConfigFile.close();
+
+                Result = outputConfig["OutputFile"];
+            }
+            //  False argument to the function
+            else{
+                std::cerr << "Error: Input argument to the function ConfigureInputOutput is not correct. Correct usage is Input or Output.\n";
+                throw std::runtime_error("Error: Wrong argument to functon ConfigureInputOutput.\n");
+            }
+
+            return Result;
+        }

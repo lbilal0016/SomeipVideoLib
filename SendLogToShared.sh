@@ -1,0 +1,1 @@
+cp ProjectLog.txt /home/ubuntu1/UbuntuShare
