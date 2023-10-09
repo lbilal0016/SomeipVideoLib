@@ -1,0 +1,1 @@
+./build/service "/home/ubuntu1/SomeipLibProject/config_server/VideoConfig.json" 

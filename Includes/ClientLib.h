@@ -9,6 +9,8 @@
 #include <condition_variable>
 #include <thread>
 
+#include "VideoReadWrite.h"
+
 
 /*  DEFINES */
 #define SAMPLE_SERVICE_ID 0x1777

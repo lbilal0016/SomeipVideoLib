@@ -8,6 +8,8 @@
 #include <condition_variable>
 #include <thread>
 
+#include "VideoReadWrite.h"
+
 //  This function passes the someip application object from the Client executable to this object code
 static std::shared_ptr<vsomeip::application> this_app;
 void set_application(std::shared_ptr<vsomeip::application> app)
@@ -33,25 +35,25 @@ void on_message(const std::shared_ptr<vsomeip::message>& Request)
         <<(int)*(its_payload->get_data()+i) << " "; 
     }
 
-    std::cout << "SERVICE: Received message with Client/Session [ "
+    std::cout << "SERVICE: Received request with Client/Session [ "
     << std::setw(4) << std::setfill('0') << std::hex << Request->get_client() << "/"
     << std::setw(4) << std::setfill('0') << std::hex << Request->get_session() << "]"
     << ss.str() << std::endl;
 
+    /*      READ THE INPUT FROM CONFIG AND PUT IT ON PAYLOAD    */
+    //  Reading the input video file
+    VideoData Payload_Video;    //  Create the container for video data 
+    VideoRead(Payload_Video);   //  Read the input into this container for video data
+
+    //  Serialise video data and load it into an std::string object
+    std::string videoJson = SerialiseVideoData(Payload_Video);
+
     //  Create Response:
-    //      Creating a vsomeip::message object
-    //          vsomeip::runtime::get() returns an instance of a vsomeip::runtime class for the first call
-    //          in all the following calls, it returns the same pointer to the runnint vsomeip::runtime instance
-    //          ->create_response() is a method within vsomeip::runtime class. 
     std::shared_ptr<vsomeip::message> its_response = vsomeip::runtime::get()->create_response(Request);
     //      Refilling the its_payload object
     its_payload = vsomeip::runtime::get()->create_payload();
-    std::vector<vsomeip::byte_t> payload_data;
-    for (int i=9; i>=0; --i)
-    {
-        payload_data.push_back(i%256);
-    }
-    its_payload->set_data(payload_data);
+
+    its_payload->set_data(reinterpret_cast<const vsomeip::byte_t*>(videoJson.c_str()), videoJson.size());
     its_response->set_payload(its_payload);
     this_app->send(its_response);
 }

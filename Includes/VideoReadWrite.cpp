@@ -8,13 +8,18 @@
 #include "VideoReadWrite.h"
 #include <nlohmann/json.hpp>
 
-void VideoRead(VideoCapture &VideoCap, VideoData &InputVideoData)
+void VideoRead(VideoData &InputVideoData)
 {
+    VideoCapture VideoCap(ConfigureInputOutput("Input", CONFIGURATION_VIDEO_IO));
+
     //  Checking against opening the file
     if(!VideoCap.isOpened()){
         std::cerr << "Error: Video file could not be opened.\n";
         throw std::runtime_error("Error: Video file read is not successful.\n");
     }   //else{std::cout << "Video file opened successfully.\n";}
+
+    //  Reading the FPS Rate into the FPS_Rate attribute
+    InputVideoData.FPS_Rate = VideoCap.get(cv::CAP_PROP_FPS);
 
     InputVideoData.frameSizeCaptured = false;   //  This flag will be set to 1 once the first frame size is captured
     while(VideoCap.read(InputVideoData.SingleFrame)){
@@ -28,10 +33,13 @@ void VideoRead(VideoCapture &VideoCap, VideoData &InputVideoData)
     }
 }
 
-void VideoWrite(VideoWriter &VideoWrite, VideoData &InputVideoData)
+void VideoWrite(VideoData &InputVideoData)
 {
+    //  1.  Creating the cv::VideoWriter object
+    VideoWriter VideoWriter(ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO), VideoWriter::fourcc('X','2','6','4'),InputVideoData.FPS_Rate, InputVideoData.frameSize);
+
     //  Checking against the createability of output file
-    if(!VideoWrite.isOpened()){
+    if(!VideoWriter.isOpened()){
         std::cerr << "Error: Creating an output video file is not successful.\n";
         throw std::runtime_error("Error: Video file write is not successful.\n");
     }//else{std::cout << "Creating the output video file is successful.\n";}
@@ -39,7 +47,7 @@ void VideoWrite(VideoWriter &VideoWrite, VideoData &InputVideoData)
     //  Writing the output file
     std::cout << "Writing the output ...\n";
     for(const cv::Mat &frame : InputVideoData.VideoFrames){
-        VideoWrite.write(frame);
+        VideoWriter.write(frame);
     }
     std::cout << "Output file is written.\n";
 }
@@ -85,6 +93,13 @@ std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string
     return Result;
 }
 
+//  This function reads the configuration file in which input and output directories for the videos are set
+void ReadConfigFile(const std::string &ConfigFile)
+{
+    CONFIGURATION_VIDEO_IO = ConfigFile;
+    std::cout << "Configuration for video input/output has been successfully defined.\n";
+}
+
 std::string SerialiseVideoData(const VideoData &videodata)
 {
     //  json string object for serialisation
@@ -92,6 +107,7 @@ std::string SerialiseVideoData(const VideoData &videodata)
 
     //  Simple attributes of videoData struct
     jsonData["frameSize"] = {videodata.frameSize.width, videodata.frameSize.height};
+    jsonData["FPS_Rate"] = videodata.FPS_Rate;
     jsonData["frameSizeCaptured"] = videodata.frameSizeCaptured;
 
     /*  Serialisation of frames to base64 strings   */
@@ -100,7 +116,17 @@ std::string SerialiseVideoData(const VideoData &videodata)
     {
         std::vector<uchar> buf; //  buffer uchar vector for storing frames temporarily in .jpg format
         cv::imencode(".jpg", frame, buf);   //  opencv function for converting and storing the current frame in buf variable
+
+        //  Following 2 lines are for inspecting frames
+        cv::imshow("Frame", frame);
+        cv::waitKey(0);
+
         std::string frame_base64encode(buf.begin(), buf.end()); //   convert uchar vector into std::string object
+
+        // Print the base64 encoded frame for inspection
+        std::cout << "Base64 Encoded Frame: " << frame_base64encode << std::endl;
+
+
         base64Frames.push_back(frame_base64encode); //  Adding the current frame into video frames container
     }
     jsonData["VideoFrames"] = base64Frames; //  Creating a VideoFrames attribute in json variable which contains a string with encoding of video frames
@@ -117,6 +143,7 @@ VideoData DeserialiseVideoData(const std::string &jsonString)
     //  Deserialisation of simple attributes
     receivedVideo.frameSize.width = jsonData["frameSize"][0];
     receivedVideo.frameSize.height = jsonData["frameSize"][1];
+    receivedVideo.FPS_Rate = jsonData["FPS_Rate"];
     receivedVideo.frameSizeCaptured = jsonData["frameSizeCaptured"];
 
     /*  Deserialisation of video frames from base64 strings */
@@ -129,4 +156,16 @@ VideoData DeserialiseVideoData(const std::string &jsonString)
     }
 
     return receivedVideo;
+}
+
+bool isJsonValid(const std::string& jsonString)
+{
+    try{
+        json parsedJson = json::parse(jsonString);
+        return true;
+    } catch (const json::parse_error& e){
+        std::cout << "Json Parsing failed.\n";
+        //  JSON parsing failed
+        return false;
+    }
 }

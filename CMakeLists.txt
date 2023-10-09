@@ -24,7 +24,9 @@ include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/Includes
 )
 
-add_executable(service ./service.cpp Includes/ServiceLib.cpp Includes/VideoReadWrite.cpp)
-add_executable(Client ./Client.cpp Includes/ClientLib.cpp Includes/VideoReadWrite.cpp)
-target_link_libraries(Client vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json)
-target_link_libraries(service vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json)
+#add_executable(service ./service.cpp Includes/ServiceLib.cpp Includes/VideoReadWrite.cpp)
+#add_executable(Client ./Client.cpp Includes/ClientLib.cpp Includes/VideoReadWrite.cpp)
+add_executable(Test ./testFunctionalities.cpp Includes/ServiceLib.cpp Includes/VideoReadWrite.cpp)
+#target_link_libraries(Client vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json)
+#target_link_libraries(service vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json)
+target_link_libraries(Test vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json)

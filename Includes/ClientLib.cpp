@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <thread>
 
+#include "VideoReadWrite.h"
 
 //std::shared_ptr< vsomeip::application > app;
 std::mutex mutex;
@@ -55,23 +56,22 @@ void run()
 
 void on_message(const std::shared_ptr<vsomeip::message> &response)
 {
-std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();
-vsomeip::length_t len = its_payload->get_length();
-
-//  Get payload
-std::stringstream ss;
-for(vsomeip::length_t i = 0; i<len; ++i)
-{
-    ss << std::setw(4)<<std::setfill('0') << std::hex
-    <<(int) *(its_payload->get_data() + i) << " ";
-}
+std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();    //  Read the someip message payload to the its_payload variable
+vsomeip::length_t len = its_payload->get_length();  //  extracting the length of the payload
+std::string received_jsonString(its_payload->get_data(), its_payload->get_data() + len);    //  extracting the raw json string from payload
 
 //  Print the received data
 std::cout << "CLIENT: Received message with Client/Session ["
 <<  std::setw(4) << std::setfill('0') << std::hex
 <<  response->get_client() << "/"
 <<  std::setw(4) << std::setfill('0') << std::hex
-<<  response->get_session() << "]" << ss.str() << std::endl;
+<<  response->get_session() << "]" << std::endl;
+
+/*  Extract payload and write it on a local directory   */
+
+VideoData receivedVideo = DeserialiseVideoData(received_jsonString);
+std::cout << "Video file is received and ready to be saved locally...\n";
+VideoWrite(receivedVideo);
 }
 
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)

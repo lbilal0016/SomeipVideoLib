@@ -1,0 +1,1 @@
+./build/Test "/home/ubuntu1/SomeipLibProject/config_Test/VideoConfig.json" 

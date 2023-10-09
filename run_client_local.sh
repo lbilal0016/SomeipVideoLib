@@ -1,0 +1,1 @@
+./build/Client "/home/ubuntu1/SomeipLibProject/config_client/VideoConfig.json" 

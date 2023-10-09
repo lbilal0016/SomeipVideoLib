@@ -17,8 +17,6 @@
 #include "VideoReadWrite.h"
 
 
-std::shared_ptr <vsomeip::application> app;
-
 int main(int argc, char *argv[])
 {
     // Check if the correct number of command line arguments is provided
@@ -29,10 +27,22 @@ int main(int argc, char *argv[])
     std::string ConfigFile(argv[1]);
     ReadConfigFile(ConfigFile);
 
-    app = vsomeip::runtime::get()->create_application("Server");
-    app->init();
-    app->register_message_handler(SAMPLE_SERVICE_ID,SAMPLE_INSTANCE_ID,SAMPLE_METHOD_ID, on_message);
-    app->offer_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);
-    set_application(app);   //  Added for compatibility when client functions are packed in another object code.
-    app->start();
+    VideoData SampleVideoData;
+    VideoRead(SampleVideoData);
+
+    std::string json_parsing_test = SerialiseVideoData(SampleVideoData);
+    std::cout << "JSON String: " << json_parsing_test << std::endl;
+
+
+    /*
+    bool is_parsed = isJsonValid(json_parsing_test);
+
+    if(is_parsed){
+        std::cout << "Json string parsed.\n";}
+        else{
+            std::cout << "Json string did not parse.\n";
+        }
+        */
+
+return 0;
 }

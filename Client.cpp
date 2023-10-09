@@ -20,7 +20,16 @@
 
 std::shared_ptr< vsomeip::application > app;
 
-int main() {
+int main(int argc, char *argv[]) {
+
+    // Check if the correct number of command line arguments is provided
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[1] << " <Path to ConfigFile>\n";
+        return 1;
+    }
+    std::string ConfigFile(argv[1]);
+    ReadConfigFile(ConfigFile);
+
 
     app = vsomeip::runtime::get()->create_application("Client");
     app->init();
