@@ -42,18 +42,20 @@ void on_message(const std::shared_ptr<vsomeip::message>& Request)
 
     /*      READ THE INPUT FROM CONFIG AND PUT IT ON PAYLOAD    */
     //  Reading the input video file
+    //  log message
+    std::cout << "Server: Input file is being read ... \n";
     VideoData Payload_Video;    //  Create the container for video data 
     VideoRead(Payload_Video);   //  Read the input into this container for video data
 
-    //  Serialise video data and load it into an std::string object
-    std::string videoJson = SerialiseVideoData(Payload_Video);
+    //  Serialise video data and load it into an std::vector<uint8_t> object
+    std::vector<uint8_t> raw_video = SerialiseVideoData(Payload_Video);
 
     //  Create Response:
     std::shared_ptr<vsomeip::message> its_response = vsomeip::runtime::get()->create_response(Request);
     //      Refilling the its_payload object
     its_payload = vsomeip::runtime::get()->create_payload();
 
-    its_payload->set_data(reinterpret_cast<const vsomeip::byte_t*>(videoJson.c_str()), videoJson.size());
+    its_payload->set_data(reinterpret_cast<const vsomeip::byte_t*>(raw_video.data()), raw_video.size());
     its_response->set_payload(its_payload);
     this_app->send(its_response);
 }

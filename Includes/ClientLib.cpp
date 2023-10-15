@@ -58,7 +58,8 @@ void on_message(const std::shared_ptr<vsomeip::message> &response)
 {
 std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();    //  Read the someip message payload to the its_payload variable
 vsomeip::length_t len = its_payload->get_length();  //  extracting the length of the payload
-std::string received_jsonString(its_payload->get_data(), its_payload->get_data() + len);    //  extracting the raw json string from payload
+
+std::vector<uint8_t> received_video_raw(its_payload->get_data(), its_payload->get_data() + len);    //  extracting the raw bytes
 
 //  Print the received data
 std::cout << "CLIENT: Received message with Client/Session ["
@@ -69,8 +70,11 @@ std::cout << "CLIENT: Received message with Client/Session ["
 
 /*  Extract payload and write it on a local directory   */
 
-VideoData receivedVideo = DeserialiseVideoData(received_jsonString);
-std::cout << "Video file is received and ready to be saved locally...\n";
+VideoData receivedVideo = DeserialiseVideoData(received_video_raw);
+
+//  log message
+std::cout << "Client : Video file is received and ready to be saved locally...\n";
+
 VideoWrite(receivedVideo);
 }
 
