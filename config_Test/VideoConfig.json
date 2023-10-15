@@ -1,4 +1,4 @@
 {
-    "InputFile" : "/home/ubuntu1/SomeipLibProject/ServerSpace/sample-5s.mp4",
+    "InputFile" : "/home/ubuntu1/SomeipLibProject/ServerSpace/VehicleRecogSampleVideo.mp4",
     "OutputFile" : "/home/ubuntu1/SomeipLibProject/ClientSpace/TestOutput.mp4"
 }
