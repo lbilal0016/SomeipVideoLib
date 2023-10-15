@@ -30,19 +30,30 @@ int main(int argc, char *argv[])
     VideoData SampleVideoData;
     VideoRead(SampleVideoData);
 
-    std::string json_parsing_test = SerialiseVideoData(SampleVideoData);
-    std::cout << "JSON String: " << json_parsing_test << std::endl;
+    //  Test of serialisation of VideoData object
+    std::vector<uint8_t> serialized_video = SerialiseVideoData(SampleVideoData);
+/*     std::cout << "Test of serialisation.\n";
+    std::cout << "Serialised Data : " << serialized_video << std::endl; */
 
+    //  Test of deserialisation of serialized_video string
+    VideoData receivedVideo = DeserialiseVideoData(serialized_video);
 
-    /*
-    bool is_parsed = isJsonValid(json_parsing_test);
+        //  Verification of whether the deserialisation is successful
+        std::cout << "Test for deserialisation.\n";
+        if(receivedVideo.VideoFrames.size() == SampleVideoData.VideoFrames.size()){std::cout << "VideoFrames size is deserialised.\n";}
+        if(receivedVideo.SingleFrame.size() == SampleVideoData.SingleFrame.size()) {std::cout << "Single frame size is deserialised.\n";}
+        if(receivedVideo.frameSize == SampleVideoData.frameSize){std::cout << "Frame size is deserialised.\n";}
+        if(receivedVideo.FPS_Rate == SampleVideoData.FPS_Rate){std::cout << "FPS rate is deserialised.\n";}
+        if(receivedVideo.frameSizeCaptured == SampleVideoData.frameSizeCaptured){std::cout << "Frame size capture flag is deserialised.\n";}
 
-    if(is_parsed){
-        std::cout << "Json string parsed.\n";}
-        else{
-            std::cout << "Json string did not parse.\n";
+        if(receivedVideo.VideoFrames.size() != SampleVideoData.VideoFrames.size() ||
+        receivedVideo.SingleFrame.size() != SampleVideoData.SingleFrame.size() ||
+        receivedVideo.frameSize != SampleVideoData.frameSize ||
+        receivedVideo.FPS_Rate != SampleVideoData.FPS_Rate ||
+        receivedVideo.frameSizeCaptured != SampleVideoData.frameSizeCaptured){
+            std::cout << "Something went wrong during deserialisation.\n";
         }
-        */
+    VideoWrite(receivedVideo);
 
 return 0;
 }
