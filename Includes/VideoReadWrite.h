@@ -7,20 +7,22 @@
 #include <string.h>
 #include <nlohmann/json.hpp>
 
+#include "VideoData.pb.h"
+
 using VideoCapture = cv::VideoCapture;
 using VideoWriter = cv::VideoWriter;
 using json = nlohmann::json;
 
 static std::string CONFIGURATION_VIDEO_IO;
 
-typedef struct VideoData
+struct VideoData
 {
     std::vector<cv::Mat> VideoFrames;
     cv::Mat SingleFrame;
     cv::Size frameSize;
     double FPS_Rate;
     bool frameSizeCaptured;
-}VideoData;
+};
 
 //  Reads the video capture object in the first argument into the second argument struct
 void VideoRead(VideoData &InputVideoData);
@@ -35,10 +37,10 @@ std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string
 void ReadConfigFile(const std::string &ConfigFile);
 
 //  This function serialises VideoData struct to JSON String and returns that sring
-std::string SerialiseVideoData(const VideoData &videodata);
+std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata);
 
 //  This function deserialises a JSON string which carries a VideoData struct, and returns this VideoData struct
-VideoData DeserialiseVideoData(const std::string &jsonString);
+VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector);
 
 //  This function is included to test the json string which is used for serialisation and deserialisation of video data
 bool isJsonValid(const std::string& jsonString);

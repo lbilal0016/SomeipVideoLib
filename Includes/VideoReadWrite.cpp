@@ -16,21 +16,26 @@ void VideoRead(VideoData &InputVideoData)
     if(!VideoCap.isOpened()){
         std::cerr << "Error: Video file could not be opened.\n";
         throw std::runtime_error("Error: Video file read is not successful.\n");
-    }   //else{std::cout << "Video file opened successfully.\n";}
+    }   else{
+        //  Log message
+        std::cout << "Video file opened successfully and is currently being read ...\n";}
 
     //  Reading the FPS Rate into the FPS_Rate attribute
     InputVideoData.FPS_Rate = VideoCap.get(cv::CAP_PROP_FPS);
 
     InputVideoData.frameSizeCaptured = false;   //  This flag will be set to 1 once the first frame size is captured
     while(VideoCap.read(InputVideoData.SingleFrame)){
+        if(!InputVideoData.SingleFrame.empty()){ // Add the frame to Frames vector only if it is not empty
         InputVideoData.VideoFrames.push_back(InputVideoData.SingleFrame.clone());
-
+        }
         //  Saving the frame size for once
         if(!InputVideoData.frameSizeCaptured){
             InputVideoData.frameSize = InputVideoData.SingleFrame.size();
             InputVideoData.frameSizeCaptured = true;    //  First video frame size is captured
         }
     }
+    //  Log message 
+    std::cout << "Input video file is being successfully read.\n";
 }
 
 void VideoWrite(VideoData &InputVideoData)
@@ -49,7 +54,10 @@ void VideoWrite(VideoData &InputVideoData)
     for(const cv::Mat &frame : InputVideoData.VideoFrames){
         VideoWriter.write(frame);
     }
-    std::cout << "Output file is written.\n";
+
+    //  Log message
+    std::cout << "Output file is written in the following directory: ";
+    std::cout << ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO) << std::endl;
 }
 
 std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile)
@@ -100,72 +108,78 @@ void ReadConfigFile(const std::string &ConfigFile)
     std::cout << "Configuration for video input/output has been successfully defined.\n";
 }
 
-std::string SerialiseVideoData(const VideoData &videodata)
+std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata)
 {
-    //  json string object for serialisation
-    json jsonData;
+    //  Filling videodata struct into the Protovideo object
+    VideoDataProto ProtovideoSent;
 
-    //  Simple attributes of videoData struct
-    jsonData["frameSize"] = {videodata.frameSize.width, videodata.frameSize.height};
-    jsonData["FPS_Rate"] = videodata.FPS_Rate;
-    jsonData["frameSizeCaptured"] = videodata.frameSizeCaptured;
-
-    /*  Serialisation of frames to base64 strings   */
-    std::vector<std::string> base64Frames;  //  Container to store encoded video frames
+    //  Filling video frames field in proto object
     for(const auto &frame : videodata.VideoFrames)
     {
-        std::vector<uchar> buf; //  buffer uchar vector for storing frames temporarily in .jpg format
-        cv::imencode(".jpg", frame, buf);   //  opencv function for converting and storing the current frame in buf variable
-
-        //  Following 2 lines are for inspecting frames
-        cv::imshow("Frame", frame);
-        cv::waitKey(0);
-
-        std::string frame_base64encode(buf.begin(), buf.end()); //   convert uchar vector into std::string object
-
-        // Print the base64 encoded frame for inspection
-        std::cout << "Base64 Encoded Frame: " << frame_base64encode << std::endl;
-
-
-        base64Frames.push_back(frame_base64encode); //  Adding the current frame into video frames container
+        std::vector<uchar> buf;
+        if(!frame.empty()){ //  Checking against empty frames
+        cv::imencode(".jpg", frame, buf);   //  Encoding current frame to JPEG format
+        ProtovideoSent.add_video_frames(reinterpret_cast<const char *>(buf.data()), buf.size());    //  Add encoded frame to proto's repeated bytes field
+        }
     }
-    jsonData["VideoFrames"] = base64Frames; //  Creating a VideoFrames attribute in json variable which contains a string with encoding of video frames
 
-    return jsonData.dump(); //  Dump the JSON data to a string
+    //  Encoding the single frame attribute to JPEG format and filling it into ProtovideoSent object
+/*     std::vector<uchar> SingleFrameBuf;
+    cv::imencode(".jpg", videodata.SingleFrame, SingleFrameBuf);
+    ProtovideoSent.set_single_frame(reinterpret_cast<const char *>(SingleFrameBuf.data()), SingleFrameBuf.size()); */
 
+    //  Filling simple fields in ProtovideoSent object
+    ProtovideoSent.set_width(videodata.frameSize.width);    //  setting width
+    ProtovideoSent.set_height(videodata.frameSize.height);  //  setting height
+    ProtovideoSent.set_fps_rate(videodata.FPS_Rate);    //  setting fps rate
+    ProtovideoSent.set_frame_size_captured(videodata.frameSizeCaptured);    //  settig the flag for frame size captured
+
+    //  Creating the return object and 
+    std::string serialized_video_string;
+    ProtovideoSent.SerializeToString(&serialized_video_string);
+    std::vector<uint8_t> serialized_video_vector(serialized_video_string.begin(),serialized_video_string.end());
+
+    //  Log message
+    std::cout << "Video file is serialised and ready to be sent.\n";
+
+    return serialized_video_vector;
 }
 
-VideoData DeserialiseVideoData(const std::string &jsonString)
+VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector)
 {
     VideoData receivedVideo;
-    json jsonData = json::parse(jsonString);    //  Parse the input JSON string into a json object
+    VideoDataProto ProtoVideoRec;  
 
-    //  Deserialisation of simple attributes
-    receivedVideo.frameSize.width = jsonData["frameSize"][0];
-    receivedVideo.frameSize.height = jsonData["frameSize"][1];
-    receivedVideo.FPS_Rate = jsonData["FPS_Rate"];
-    receivedVideo.frameSizeCaptured = jsonData["frameSizeCaptured"];
+    //  Log message
+    std::cout << "Converting raw video data into readable video ... \n";
 
-    /*  Deserialisation of video frames from base64 strings */
-    std::vector<std::string> base64Frames = jsonData["VideoFrames"];    //  Container to extract video frames from json stack
-    for(const auto &base64Frame : base64Frames)
+    //  Reading (parsing) the input string into ProtoVideoRec object
+    std::string protoString(raw_video_vector.begin(),raw_video_vector.end());
+    ProtoVideoRec.ParseFromString(protoString);
+
+    //  Fill the receivedVideo struct here:
+
+    //  Filling the VideoFrames vector
+    for(const auto &frames : ProtoVideoRec.video_frames())
     {
-        std::vector<uchar> buf(base64Frame.begin(), base64Frame.end()); //  buffer uchar vector for storing read frames temporarily before decoding
-        cv::Mat decoded_frame = cv::imdecode(buf, cv::IMREAD_COLOR);    //  decode single frames from buffer container with color option from cv library
-        receivedVideo.VideoFrames.push_back(decoded_frame); //  insert decoded frames into VideoFrames container 
+        std::vector<uchar> buf(frames.begin(), frames.end());
+        cv::Mat frame = cv::imdecode(buf, cv::IMREAD_COLOR);
+        receivedVideo.VideoFrames.push_back(frame);
     }
 
+    //  Decode and fill SingleFrame attribute
+/*     const std::string &singleFrameRec = ProtoVideoRec.single_frame();
+    std::vector<uchar> single_frame_buf(singleFrameRec.begin(), singleFrameRec.end());
+    receivedVideo.SingleFrame = cv::imdecode(single_frame_buf, cv::IMREAD_COLOR); */
+
+    //  Filling simple attributes
+    receivedVideo.frameSize = cv::Size(ProtoVideoRec.width(), ProtoVideoRec.height());
+    receivedVideo.FPS_Rate = ProtoVideoRec.fps_rate();
+    receivedVideo.frameSizeCaptured = ProtoVideoRec.frame_size_captured();
+
+    //  Log message
+    std::cout << "Received raw video is now converted into an opencv object, and is ready to be written.\n";
+
+    //  Returning receivedVideo struct
     return receivedVideo;
-}
-
-bool isJsonValid(const std::string& jsonString)
-{
-    try{
-        json parsedJson = json::parse(jsonString);
-        return true;
-    } catch (const json::parse_error& e){
-        std::cout << "Json Parsing failed.\n";
-        //  JSON parsing failed
-        return false;
-    }
 }
