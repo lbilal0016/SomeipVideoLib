@@ -1,3 +1,714 @@
+===============================PROJECT LOG FROM 15Oct2023======================================
+/SomeipLibProject/
+---------------------------------
+    service.cpp:
+    ------------
+    #include <iomanip>
+    #include <iostream>
+    #include <sstream>
+
+    #include <fstream>
+    #include <vector>
+    #include <stdexcept>
+    #include <string.h>
+
+
+    #include <vsomeip/vsomeip.hpp>
+
+    #include "opencv4/opencv2/opencv.hpp"
+
+    #include "ServiceLib.h"
+
+    #include "VideoReadWrite.h"
+
+
+    std::shared_ptr <vsomeip::application> app;
+
+    int main(int argc, char *argv[])
+    {
+        // Check if the correct number of command line arguments is provided
+        if (argc != 2) {
+            std::cerr << "Usage: " << argv[1] << " <Path to ConfigFile>\n";
+            return 1;
+        }
+        std::string ConfigFile(argv[1]);
+        ReadConfigFile(ConfigFile);
+
+        app = vsomeip::runtime::get()->create_application("Server");
+        app->init();
+        app->register_message_handler(SAMPLE_SERVICE_ID,SAMPLE_INSTANCE_ID,SAMPLE_METHOD_ID, on_message);
+        app->offer_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);
+        set_application(app);   //  Added for compatibility when client functions are packed in another object code.
+        app->start();
+    }
+    Client.cpp:
+    -----------
+    #include <vsomeip/vsomeip.hpp>
+    #include <iostream>
+    #include <iomanip>
+    #include <sstream>
+
+    #include <fstream>
+    #include <vector>
+    #include <stdexcept>
+    #include <string.h>
+
+
+    #include <condition_variable>
+    #include <thread>
+
+    #include "opencv4/opencv2/opencv.hpp"
+
+    #include "VideoReadWrite.h"
+
+    #include "ClientLib.h"
+
+    std::shared_ptr< vsomeip::application > app;
+
+    int main(int argc, char *argv[]) {
+
+        // Check if the correct number of command line arguments is provided
+        if (argc != 2) {
+            std::cerr << "Usage: " << argv[1] << " <Path to ConfigFile>\n";
+            return 1;
+        }
+        std::string ConfigFile(argv[1]);
+        ReadConfigFile(ConfigFile);
+
+
+        app = vsomeip::runtime::get()->create_application("Client");
+        app->init();
+        app->register_availability_handler(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID, on_availability);
+        app->request_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);
+        app->register_message_handler(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID, SAMPLE_METHOD_ID, on_message);
+        std::thread sender(run);
+        set_application(app);   //  Added for compatibility when client functions are packed in another object code.
+        app->start();
+    }
+    testFunctionalities.cpp:
+    ------------------------
+    #include <iomanip>
+    #include <iostream>
+    #include <sstream>
+
+    #include <fstream>
+    #include <vector>
+    #include <stdexcept>
+    #include <string.h>
+
+
+    #include <vsomeip/vsomeip.hpp>
+
+    #include "opencv4/opencv2/opencv.hpp"
+
+    #include "ServiceLib.h"
+
+    #include "VideoReadWrite.h"
+
+
+    int main(int argc, char *argv[])
+    {
+        // Check if the correct number of command line arguments is provided
+        if (argc != 2) {
+            std::cerr << "Usage: " << argv[1] << " <Path to ConfigFile>\n";
+            return 1;
+        }
+        std::string ConfigFile(argv[1]);
+        ReadConfigFile(ConfigFile);
+
+        VideoData SampleVideoData;
+        VideoRead(SampleVideoData);
+
+        //  Test of serialisation of VideoData object
+        std::vector<uint8_t> serialized_video = SerialiseVideoData(SampleVideoData);
+    /*     std::cout << "Test of serialisation.\n";
+        std::cout << "Serialised Data : " << serialized_video << std::endl; */
+
+        //  Test of deserialisation of serialized_video string
+        VideoData receivedVideo = DeserialiseVideoData(serialized_video);
+
+            //  Verification of whether the deserialisation is successful
+            std::cout << "Test for deserialisation.\n";
+            if(receivedVideo.VideoFrames.size() == SampleVideoData.VideoFrames.size()){std::cout << "VideoFrames size is deserialised.\n";}
+            if(receivedVideo.SingleFrame.size() == SampleVideoData.SingleFrame.size()) {std::cout << "Single frame size is deserialised.\n";}
+            if(receivedVideo.frameSize == SampleVideoData.frameSize){std::cout << "Frame size is deserialised.\n";}
+            if(receivedVideo.FPS_Rate == SampleVideoData.FPS_Rate){std::cout << "FPS rate is deserialised.\n";}
+            if(receivedVideo.frameSizeCaptured == SampleVideoData.frameSizeCaptured){std::cout << "Frame size capture flag is deserialised.\n";}
+
+            if(receivedVideo.VideoFrames.size() != SampleVideoData.VideoFrames.size() ||
+            receivedVideo.SingleFrame.size() != SampleVideoData.SingleFrame.size() ||
+            receivedVideo.frameSize != SampleVideoData.frameSize ||
+            receivedVideo.FPS_Rate != SampleVideoData.FPS_Rate ||
+            receivedVideo.frameSizeCaptured != SampleVideoData.frameSizeCaptured){
+                std::cout << "Something went wrong during deserialisation.\n";
+            }
+        VideoWrite(receivedVideo);
+
+    return 0;
+    }
+
+    CMakeLists.txt:
+    ---------------
+    cmake_minimum_required (VERSION 3.10.2)
+
+    cmake_minimum_required (VERSION 3.10.2)
+
+    project(VideoReadWriteProject VERSION 1.0.0 LANGUAGES C CXX)
+
+    set (CMAKE_CXX_FLAGS "-g -std=c++0x")
+
+    find_package (vsomeip3 3.3.8 REQUIRED)
+    find_package( Boost 1.55 COMPONENTS system thread log REQUIRED )
+
+    include(FetchContent)
+    FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json
+        GIT_TAG v3.11.2
+        GIT_SHALLOW TRUE)
+    FetchContent_MakeAvailable(nlohmann_json)
+
+    find_package(OpenCV REQUIRED)
+
+    include_directories (
+        ${Boost_INCLUDE_DIR}
+        ${VSOMEIP3_INCLUDE_DIRS}
+        ${OpenCV_INCLUDE_DIRS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Includes
+    )
+
+    add_executable(service ./service.cpp Includes/ServiceLib.cpp Includes/VideoReadWrite.cpp Includes/VideoData.pb.cc)
+    add_executable(Client ./Client.cpp Includes/ClientLib.cpp Includes/VideoReadWrite.cpp Includes/VideoData.pb.cc)
+    #add_executable(Test ./testFunctionalities.cpp Includes/ServiceLib.cpp Includes/VideoReadWrite.cpp Includes/VideoData.pb.cc)
+    target_link_libraries(Client vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf) 
+    target_link_libraries(service vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf)
+    #target_link_libraries(Test vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf)
+
+    Includes:
+    ---------
+        ClientLib.cpp:
+        --------------
+        #include "ClientLib.h"
+        #include <vsomeip/vsomeip.hpp>
+        #include <iostream>
+        #include <iomanip>
+        #include <sstream>
+
+        #include <condition_variable>
+        #include <thread>
+
+        #include "VideoReadWrite.h"
+
+        //std::shared_ptr< vsomeip::application > app;
+        std::mutex mutex;
+        std::condition_variable condition;
+
+
+        //  This function passes the someip application object from the Client executable to this object code
+        static std::shared_ptr<vsomeip::application> this_app;
+        void set_application(std::shared_ptr<vsomeip::application> app)
+        {
+            this_app = app;
+        }
+
+        //  This function will be run on the client side after the service is offered
+        void run()
+        {
+            std::unique_lock<std::mutex> lock(mutex);
+            condition.wait(lock);
+
+            //  Creating the object for vsome request message
+            std::shared_ptr<vsomeip::message> request;
+            request = vsomeip::runtime::get()->create_request();
+            //  Setting service id, instance id, method id
+            request->set_service(SAMPLE_SERVICE_ID);
+            request->set_instance(SAMPLE_INSTANCE_ID);
+            request->set_method(SAMPLE_METHOD_ID);
+
+            //  Create and add payload to someip message object
+            std::shared_ptr<vsomeip::payload> its_payload = vsomeip::runtime::get()->create_payload();
+            //      Creating the vector to carry bytes
+            std::vector<vsomeip::byte_t> payload_data;
+
+            //      Filling the vector with random data (for training purposes)
+            for(vsomeip::byte_t i = 0; i<10; ++i)
+            {
+                payload_data.push_back(i % 256);
+            }
+
+            //      Loading the data vector to someip payload
+            its_payload->set_data(payload_data);
+            
+            //      Adding the payload to someip message
+            request->set_payload(its_payload);
+            this_app->send(request);
+        }
+
+        void on_message(const std::shared_ptr<vsomeip::message> &response)
+        {
+        std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();    //  Read the someip message payload to the its_payload variable
+        vsomeip::length_t len = its_payload->get_length();  //  extracting the length of the payload
+
+        std::vector<uint8_t> received_video_raw(its_payload->get_data(), its_payload->get_data() + len);    //  extracting the raw bytes
+
+        //  Print the received data
+        std::cout << "CLIENT: Received message with Client/Session ["
+        <<  std::setw(4) << std::setfill('0') << std::hex
+        <<  response->get_client() << "/"
+        <<  std::setw(4) << std::setfill('0') << std::hex
+        <<  response->get_session() << "]" << std::endl;
+
+        /*  Extract payload and write it on a local directory   */
+
+        VideoData receivedVideo = DeserialiseVideoData(received_video_raw);
+
+        //  log message
+        std::cout << "Client : Video file is received and ready to be saved locally...\n";
+
+        VideoWrite(receivedVideo);
+        }
+
+        void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
+        {
+        //  Checking the availability of the service offered by the server
+        //	    std::setw(4) -> set the width of hexadecimal number to 4
+        //	    std::setfill(0) -> if the service id has less than 4 digits, fill the leading digits with 0s.
+        std::cout << "CLIENT: Service (Service.Instance) [" << std::setw(4) << std::setfill('0') << std::hex 
+        << Service << "." << Instance << "] is " << (is_available ? "available" : "NOT available") << std::endl;
+
+        //  Sending wake-up call for the waiting thread on the client side after the service is available
+        condition.notify_one();
+        }
+        ServiceLib.cpp:
+        ---------------
+        #include "ServiceLib.h"
+
+        #include <vsomeip/vsomeip.hpp>
+        #include <iostream>
+        #include <iomanip>
+        #include <sstream>
+
+        #include <condition_variable>
+        #include <thread>
+
+        #include "VideoReadWrite.h"
+
+        //  This function passes the someip application object from the Client executable to this object code
+        static std::shared_ptr<vsomeip::application> this_app;
+        void set_application(std::shared_ptr<vsomeip::application> app)
+        {
+            this_app = app;
+        }
+
+        void on_message(const std::shared_ptr<vsomeip::message>& Request)
+        {
+            //  Reading the payload
+            std::shared_ptr<vsomeip::payload> its_payload = Request->get_payload();
+            //  Getting the payload length
+            vsomeip::length_t len = its_payload->get_length();
+
+            //  Getting the payload
+            std::stringstream ss;
+            //  This initiates a loop that iterates over each byte of the payload.
+            for(vsomeip::length_t i=0; i<len; ++i)
+            {
+                ss << std::setw(2) << std::setfill('0') << std::hex
+                //  its_payload->get_data() returns a pointer to the start of the payload data
+                //  << " ";: A space is added after each formatted hexadecimal value to separate them in the final string.
+                <<(int)*(its_payload->get_data()+i) << " "; 
+            }
+
+            std::cout << "SERVICE: Received request with Client/Session [ "
+            << std::setw(4) << std::setfill('0') << std::hex << Request->get_client() << "/"
+            << std::setw(4) << std::setfill('0') << std::hex << Request->get_session() << "]"
+            << ss.str() << std::endl;
+
+            /*      READ THE INPUT FROM CONFIG AND PUT IT ON PAYLOAD    */
+            //  Reading the input video file
+            //  log message
+            std::cout << "Server: Input file is being read ... \n";
+            VideoData Payload_Video;    //  Create the container for video data 
+            VideoRead(Payload_Video);   //  Read the input into this container for video data
+
+            //  Serialise video data and load it into an std::vector<uint8_t> object
+            std::vector<uint8_t> raw_video = SerialiseVideoData(Payload_Video);
+
+            //  Create Response:
+            std::shared_ptr<vsomeip::message> its_response = vsomeip::runtime::get()->create_response(Request);
+            //      Refilling the its_payload object
+            its_payload = vsomeip::runtime::get()->create_payload();
+
+            its_payload->set_data(reinterpret_cast<const vsomeip::byte_t*>(raw_video.data()), raw_video.size());
+            its_response->set_payload(its_payload);
+            this_app->send(its_response);
+        }
+
+        VideoData.proto:
+        ----------------
+        syntax = "proto3";
+
+        message VideoDataProto{
+            repeated bytes video_frames = 1; // Repeated fields for storing binary frames (= 1 -> Field 1 belongs to video_frames byte sequence)
+            bytes single_frame = 2; //  A single frame as binary
+            int32 width = 3;
+            int32 height = 4;
+            double fps_rate = 5;
+            bool frame_size_captured = 6;
+        }
+
+        >>VideoData.pb.cc & VideoData.pb.h are generated automatically with the following command:    protoc --cpp_out=. VideoData.proto
+
+        VideoReadWrite.cpp:
+        -------------------
+        #include "opencv4/opencv2/opencv.hpp"
+        #include <iostream>
+        #include <fstream>
+        #include <vector>
+        #include <stdexcept>
+        #include <string.h>
+
+        #include "VideoReadWrite.h"
+        #include <nlohmann/json.hpp>
+
+        void VideoRead(VideoData &InputVideoData)
+        {
+            VideoCapture VideoCap(ConfigureInputOutput("Input", CONFIGURATION_VIDEO_IO));
+
+            //  Checking against opening the file
+            if(!VideoCap.isOpened()){
+                std::cerr << "Error: Video file could not be opened.\n";
+                throw std::runtime_error("Error: Video file read is not successful.\n");
+            }   else{
+                //  Log message
+                std::cout << "Video file opened successfully and is currently being read ...\n";}
+
+            //  Reading the FPS Rate into the FPS_Rate attribute
+            InputVideoData.FPS_Rate = VideoCap.get(cv::CAP_PROP_FPS);
+
+            InputVideoData.frameSizeCaptured = false;   //  This flag will be set to 1 once the first frame size is captured
+            while(VideoCap.read(InputVideoData.SingleFrame)){
+                if(!InputVideoData.SingleFrame.empty()){ // Add the frame to Frames vector only if it is not empty
+                InputVideoData.VideoFrames.push_back(InputVideoData.SingleFrame.clone());
+                }
+                //  Saving the frame size for once
+                if(!InputVideoData.frameSizeCaptured){
+                    InputVideoData.frameSize = InputVideoData.SingleFrame.size();
+                    InputVideoData.frameSizeCaptured = true;    //  First video frame size is captured
+                }
+            }
+            //  Log message 
+            std::cout << "Input video file is being successfully read.\n";
+        }
+
+        void VideoWrite(VideoData &InputVideoData)
+        {
+            //  1.  Creating the cv::VideoWriter object
+            VideoWriter VideoWriter(ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO), VideoWriter::fourcc('X','2','6','4'),InputVideoData.FPS_Rate, InputVideoData.frameSize);
+
+            //  Checking against the createability of output file
+            if(!VideoWriter.isOpened()){
+                std::cerr << "Error: Creating an output video file is not successful.\n";
+                throw std::runtime_error("Error: Video file write is not successful.\n");
+            }//else{std::cout << "Creating the output video file is successful.\n";}
+
+            //  Writing the output file
+            std::cout << "Writing the output ...\n";
+            for(const cv::Mat &frame : InputVideoData.VideoFrames){
+                VideoWriter.write(frame);
+            }
+
+            //  Log message
+            std::cout << "Output file is written in the following directory: ";
+            std::cout << ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO) << std::endl;
+        }
+
+        std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile)
+        {      
+            std::string Result;
+            //  Configure input
+            if(typeInputOutput.compare("Input") == 0)
+            {
+                json inputConfig;
+                std::ifstream inputConfigFile(ConfigFile);
+                if(!inputConfigFile.is_open())
+                {
+                    std::cerr << "Error: Failed to open input configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+                    throw std::runtime_error("Error: Configuration file could not be opened.\n");
+                }
+                inputConfigFile >> inputConfig;
+                inputConfigFile.close();
+
+                Result = inputConfig["InputFile"];
+            }
+            //  Configure Output   
+            else if(typeInputOutput.compare("Output") == 0){
+                json outputConfig;
+                std::ifstream outputConfigFile(ConfigFile);
+                if(!outputConfigFile.is_open())
+                {
+                    std::cerr << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+                    throw std::runtime_error("Error: Configuration file could not be opened.\n");
+                }
+                outputConfigFile >> outputConfig;
+                outputConfigFile.close();
+
+                Result = outputConfig["OutputFile"];
+            }
+            //  False argument to the function
+            else{
+                std::cerr << "Error: Input argument to the function ConfigureInputOutput is not correct. Correct usage is Input or Output.\n";
+                throw std::runtime_error("Error: Wrong argument to functon ConfigureInputOutput.\n");
+            }
+
+            return Result;
+        }
+
+        //  This function reads the configuration file in which input and output directories for the videos are set
+        void ReadConfigFile(const std::string &ConfigFile)
+        {
+            CONFIGURATION_VIDEO_IO = ConfigFile;
+            std::cout << "Configuration for video input/output has been successfully defined.\n";
+        }
+
+        std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata)
+        {
+            //  Filling videodata struct into the Protovideo object
+            VideoDataProto ProtovideoSent;
+
+            //  Filling video frames field in proto object
+            for(const auto &frame : videodata.VideoFrames)
+            {
+                std::vector<uchar> buf;
+                if(!frame.empty()){ //  Checking against empty frames
+                cv::imencode(".jpg", frame, buf);   //  Encoding current frame to JPEG format
+                ProtovideoSent.add_video_frames(reinterpret_cast<const char *>(buf.data()), buf.size());    //  Add encoded frame to proto's repeated bytes field
+                }
+            }
+
+            //  Encoding the single frame attribute to JPEG format and filling it into ProtovideoSent object
+        /*     std::vector<uchar> SingleFrameBuf;
+            cv::imencode(".jpg", videodata.SingleFrame, SingleFrameBuf);
+            ProtovideoSent.set_single_frame(reinterpret_cast<const char *>(SingleFrameBuf.data()), SingleFrameBuf.size()); */
+
+            //  Filling simple fields in ProtovideoSent object
+            ProtovideoSent.set_width(videodata.frameSize.width);    //  setting width
+            ProtovideoSent.set_height(videodata.frameSize.height);  //  setting height
+            ProtovideoSent.set_fps_rate(videodata.FPS_Rate);    //  setting fps rate
+            ProtovideoSent.set_frame_size_captured(videodata.frameSizeCaptured);    //  settig the flag for frame size captured
+
+            //  Creating the return object and 
+            std::string serialized_video_string;
+            ProtovideoSent.SerializeToString(&serialized_video_string);
+            std::vector<uint8_t> serialized_video_vector(serialized_video_string.begin(),serialized_video_string.end());
+
+            //  Log message
+            std::cout << "Video file is serialised and ready to be sent.\n";
+
+            return serialized_video_vector;
+        }
+
+        VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector)
+        {
+            VideoData receivedVideo;
+            VideoDataProto ProtoVideoRec;  
+
+            //  Log message
+            std::cout << "Converting raw video data into readable video ... \n";
+
+            //  Reading (parsing) the input string into ProtoVideoRec object
+            std::string protoString(raw_video_vector.begin(),raw_video_vector.end());
+            ProtoVideoRec.ParseFromString(protoString);
+
+            //  Fill the receivedVideo struct here:
+
+            //  Filling the VideoFrames vector
+            for(const auto &frames : ProtoVideoRec.video_frames())
+            {
+                std::vector<uchar> buf(frames.begin(), frames.end());
+                cv::Mat frame = cv::imdecode(buf, cv::IMREAD_COLOR);
+                receivedVideo.VideoFrames.push_back(frame);
+            }
+
+            //  Decode and fill SingleFrame attribute
+        /*     const std::string &singleFrameRec = ProtoVideoRec.single_frame();
+            std::vector<uchar> single_frame_buf(singleFrameRec.begin(), singleFrameRec.end());
+            receivedVideo.SingleFrame = cv::imdecode(single_frame_buf, cv::IMREAD_COLOR); */
+
+            //  Filling simple attributes
+            receivedVideo.frameSize = cv::Size(ProtoVideoRec.width(), ProtoVideoRec.height());
+            receivedVideo.FPS_Rate = ProtoVideoRec.fps_rate();
+            receivedVideo.frameSizeCaptured = ProtoVideoRec.frame_size_captured();
+
+            //  Log message
+            std::cout << "Received raw video is now converted into an opencv object, and is ready to be written.\n";
+
+            //  Returning receivedVideo struct
+            return receivedVideo;
+        }
+
+        VideoReadWrite.h:
+        -----------------
+        #pragma once
+        #include "opencv4/opencv2/opencv.hpp"
+        #include <iostream>
+        #include <fstream>
+        #include <vector>
+        #include <stdexcept>
+        #include <string.h>
+        #include <nlohmann/json.hpp>
+
+        #include "VideoData.pb.h"
+
+        using VideoCapture = cv::VideoCapture;
+        using VideoWriter = cv::VideoWriter;
+        using json = nlohmann::json;
+
+        static std::string CONFIGURATION_VIDEO_IO;
+
+        struct VideoData
+        {
+            std::vector<cv::Mat> VideoFrames;
+            cv::Mat SingleFrame;
+            cv::Size frameSize;
+            double FPS_Rate;
+            bool frameSizeCaptured;
+        };
+
+        //  Reads the video capture object in the first argument into the second argument struct
+        void VideoRead(VideoData &InputVideoData);
+
+        //  Writes the second argument of video data struct into the first argument of videowriter object
+        void VideoWrite(VideoData &InputVideoData);
+
+        //  Configures Input/Output files via json configuration file and returns the directory for input/output files
+        std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile);
+
+        //  This function reads the configuration file to be used from the main function
+        void ReadConfigFile(const std::string &ConfigFile);
+
+        //  This function serialises VideoData struct to JSON String and returns that sring
+        std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata);
+
+        //  This function deserialises a JSON string which carries a VideoData struct, and returns this VideoData struct
+        VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector);
+
+    CONSOLE OUTPUT Server:
+    ----------------------
+    RTNETLINK answers: File exists
+    /home/ubuntu1/SomeipLibProject/config_server
+    Configuration for video input/output has been successfully defined.
+    2023-10-15 22:29:46.407940 [info] Using configuration folder: "/home/ubuntu1/SomeipLibProject/config_server".
+    2023-10-15 22:29:46.408546 [info] Parsed vsomeip configuration in 2ms
+    2023-10-15 22:29:46.408686 [info] Configuration module loaded.
+    2023-10-15 22:29:46.408772 [info] Initializing vsomeip (3.3.8) application "Server".
+    2023-10-15 22:29:46.408974 [info] Instantiating routing manager [Host].
+    2023-10-15 22:29:46.410827 [info] create_routing_root: Routing root @ /tmp/vsomeip-0
+    2023-10-15 22:29:46.411543 [info] Service Discovery enabled. Trying to load module.
+    2023-10-15 22:29:46.427627 [info] Service Discovery module loaded.
+    2023-10-15 22:29:46.428109 [info] Application(Server, 1111) is initialized (11, 100).
+    2023-10-15 22:29:46.428386 [info] OFFER(1111): [1777.5677:0.0] (true)
+    2023-10-15 22:29:46.429520 [info] create_local_server: Listening @ /tmp/vsomeip-1111
+    2023-10-15 22:29:46.429819 [info] Starting vsomeip application "Server" (1111) using 2 threads I/O nice 255
+    2023-10-15 22:29:46.431035 [info] Client [1111] routes unicast:192.168.178.96, netmask:255.255.255.0
+    2023-10-15 22:29:46.432129 [info] shutdown thread id from application: 1111 (Server) is: 7f53cd3fd640 TID: 18405
+    2023-10-15 22:29:46.430822 [info] main dispatch thread id from application: 1111 (Server) is: 7f53cdbfe640 TID: 18404
+    2023-10-15 22:29:46.433966 [info] Watchdog is disabled!
+    2023-10-15 22:29:46.434572 [info] io thread id from application: 1111 (Server) is: 7f53cec508c0 TID: 18402
+    2023-10-15 22:29:46.434902 [info] io thread id from application: 1111 (Server) is: 7f53c7fff640 TID: 18407
+    2023-10-15 22:29:46.435498 [info] vSomeIP 3.3.8 | (default)
+    2023-10-15 22:29:46.435827 [info] Network interface "enp0s3" state changed: up
+    2023-10-15 22:29:46.436377 [info] Route "default route (0.0.0.0/0) if: enp0s3 gw: 192.168.178.1" state changed: up
+    2023-10-15 22:29:46.436809 [info] udp_server_endpoint_impl: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-15 22:29:46.437016 [debug] Joining to multicast group 224.224.224.245 from 192.168.178.96
+    2023-10-15 22:29:46.437527 [info] udp_server_endpoint_impl: SO_RCVBUF is: 212992 (1703936) local port:30500
+    2023-10-15 22:29:46.437667 [info] SOME/IP routing ready.
+    2023-10-15 22:29:46.437940 [info] udp_server_endpoint_impl<multicast>: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-15 22:29:46.438022 [warning] Route "224.224.224.245/32 if: enp0s3 gw: n/a" state changed: up
+    2023-10-15 22:29:56.440149 [info] vSomeIP 3.3.8 | (default)
+    2023-10-15 22:29:58.103750 [info] Application/Client 2222 is registering.
+    2023-10-15 22:29:58.105001 [info] Client [1111] is connecting to [2222] at /tmp/vsomeip-2222
+    2023-10-15 22:29:58.108338 [info] REGISTERED_ACK(2222)
+    SERVICE: Received request with Client/Session [ 2222/0001]00 01 02 03 04 05 06 07 08 09 
+    Server: Input file is being read ... 
+    2023-10-15 22:29:58.194130 [info] REQUEST(2222): [1777.5677:255.4294967295]
+    Video file opened successfully and is currently being read ...
+    2023-10-15 22:29:58.112355 [warning] BLOCKING CALL MESSAGE(1111): [1777.5677.0421:0001]
+    2023-10-15 22:29:58.153613 [info] dispatch thread id from application: 1111 (Server) is: 7f53c62d1640 TID: 18416
+    Input video file is being successfully read.
+    Video file is serialised and ready to be sent.
+    2023-10-15 22:30:06.447778 [info] vSomeIP 3.3.8 | (default)
+    2023-10-15 22:30:16.791868 [info] local_uds_client_endpoint_impl::receive_cbk Error: End of file
+    2023-10-15 22:30:16.792716 [info] routing_manager_impl::handle_client_error Client 0x1111 handles a client error(2222)
+    2023-10-15 22:30:16.792824 [info] Application/Client 2222 is deregistering.
+    2023-10-15 22:30:16.794413 [info] Client [1111] is closing connection to [2222]
+    2023-10-15 22:30:16.449205 [info] vSomeIP 3.3.8 | (default)
+
+    CONSOLE OUTPUT Client:
+    ----------------------
+    /home/ubuntu1/SomeipLibProject/config_client
+    Configuration for video input/output has been successfully defined.
+    2023-10-15 22:29:58.089451 [info] Using configuration folder: "/home/ubuntu1/SomeipLibProject/config_client".
+    2023-10-15 22:29:58.090046 [info] Parsed vsomeip configuration in 1ms
+    2023-10-15 22:29:58.090166 [info] Configuration module loaded.
+    2023-10-15 22:29:58.090277 [info] Initializing vsomeip (3.3.8) application "Client".
+    2023-10-15 22:29:58.090350 [info] Instantiating routing manager [Proxy].
+    2023-10-15 22:29:58.090568 [info] Client [2222] is connecting to [0] at /tmp/vsomeip-0
+    2023-10-15 22:29:58.090786 [info] Application(Client, 2222) is initialized (11, 100).
+    2023-10-15 22:29:58.091879 [info] Starting vsomeip application "Client" (2222) using 2 threads I/O nice 255
+    2023-10-15 22:29:58.092680 [info] main dispatch thread id from application: 2222 (Client) is: 7fc790bfe640 TID: 18411
+    2023-10-15 22:29:58.093690 [info] shutdown thread id from application: 2222 (Client) is: 7fc7903fd640 TID: 18412
+    2023-10-15 22:29:58.094592 [info] io thread id from application: 2222 (Client) is: 7fc791bac8c0 TID: 18409
+    2023-10-15 22:29:58.095026 [info] io thread id from application: 2222 (Client) is: 7fc78fbfc640 TID: 18413
+    2023-10-15 22:29:58.102020 [info] create_local_server: Listening @ /tmp/vsomeip-2222
+    2023-10-15 22:29:58.102728 [info] Client 2222 (Client) successfully connected to routing  ~> registering..
+    2023-10-15 22:29:58.103178 [info] Registering to routing manager @ vsomeip-0
+    2023-10-15 22:29:58.107516 [info] Application/Client 2222 (Client) is registered.
+    CLIENT: Service (Service.Instance) [1777.5677] is NOT available
+    2023-10-15 22:29:58.199523 [info] ON_AVAILABLE(2222): [1777.5677:0.0]
+    CLIENT: Service (Service.Instance) [1777.5677] is available
+    CLIENT: Received message with Client/Session [2222/0001]
+    Converting raw video data into readable video ... 
+    2023-10-15 22:30:00.108060 [warning] BLOCKING CALL MESSAGE(2222): [1777.5677.0421:0001]
+    2023-10-15 22:30:00.109999 [info] dispatch thread id from application: 2222 (Client) is: 7fc78d96f640 TID: 18417
+    Received raw video is now converted into an opencv object, and is ready to be written.
+    Client : Video file is received and ready to be saved locally...
+    OpenCV: FFMPEG: tag 0x34363258/'X264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+    OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+    Writing the output ...
+    Output file is written in the following directory: /home/ubuntu1/SomeipLibProject/ClientSpace/Output.mp4
+
+    Observations:
+    -------------
+    -   Video file was read by server side (on the same ubuntu machine, but run on a different terminal)
+
+    -   Video file was serialised by server upon receiving the request from client: 
+            SERVICE: Received request with Client/Session [ 2222/0001]00 01 02 03 04 05 06 07 08 09 
+
+    -   Video file was sent to client side for saving in a different directory which is configured by VideoConfig.json configuration
+
+    -   Video file was deserialised by client:
+            CLIENT: Received message with Client/Session [2222/0001]
+            Converting raw video data into readable video ... 
+            2023-10-15 22:30:00.108060 [warning] BLOCKING CALL MESSAGE(2222): [1777.5677.0421:0001]
+            2023-10-15 22:30:00.109999 [info] dispatch thread id from application: 2222 (Client) is: 7fc78d96f640 TID: 18417
+            Received raw video is now converted into an opencv object, and is ready to be written.
+            
+    -   Video file was successfully saved on the client side:
+            Client : Video file is received and ready to be saved locally...
+            OpenCV: FFMPEG: tag 0x34363258/'X264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+            OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+            Writing the output ...
+            Output file is written in the following directory: /home/ubuntu1/SomeipLibProject/ClientSpace/Output.mp4
+
+
+        
+
+
+
+
+===============================PROJECT LOG FROM 09Oct2023======================================
+error: invalid conversion from ‘const char*’ to ‘const byte_t*’ {aka ‘const unsigned char*’} [-fpermissive]
+   56 |     its_payload->set_data(videoJson.c_str(), videoJson.size());
 ===============================PROJECT LOG FROM 03Oct2023======================================
 /SomeipLibProject/
 ---------------------------------
