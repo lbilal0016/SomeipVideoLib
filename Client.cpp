@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     std::string ConfigFile(argv[1]);
-    ReadConfigFile(ConfigFile);
+    VideoReadWrite::ReadConfigFile(ConfigFile);
 
 
     app = vsomeip::runtime::get()->create_application("Client");

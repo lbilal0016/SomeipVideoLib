@@ -102,11 +102,12 @@ std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string
 }
 
 //  This function reads the configuration file in which input and output directories for the videos are set
-void ReadConfigFile(const std::string &ConfigFile)
+void VideoReadWrite::ReadConfigFile(const std::string &ConfigFile)
 {
     CONFIGURATION_VIDEO_IO = ConfigFile;
     std::cout << "Configuration for video input/output has been successfully defined.\n";
 }
+
 
 std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata)
 {
@@ -144,6 +145,7 @@ std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata)
 
     return serialized_video_vector;
 }
+
 
 VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector)
 {
