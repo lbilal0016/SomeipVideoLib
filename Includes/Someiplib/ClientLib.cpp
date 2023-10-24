@@ -24,8 +24,10 @@ void set_application(std::shared_ptr<vsomeip::application> app)
 //  This function will be run on the client side after the service is offered
 void run()
 {
+    std::cout << "CLIENT: run() : \n";
     std::unique_lock<std::mutex> lock(mutex);
     condition.wait(lock);
+    std::cout << "CLIENT: lock is removed\n";
 
     //  Creating the object for vsome request message
     std::shared_ptr<vsomeip::message> request;
@@ -34,6 +36,14 @@ void run()
     request->set_service(SAMPLE_SERVICE_ID);
     request->set_instance(SAMPLE_INSTANCE_ID);
     request->set_method(SAMPLE_METHOD_ID);
+    
+    #ifdef TCP_COMMUNICATION
+    //  Use the following if you want to realise a TCP communication:
+    request->set_reliable(true);
+    #elif
+    //  Use the following if you want to realise a UDP communication:
+    request->set_reliable(false);
+    #endif
 
     //  Create and add payload to someip message object
     std::shared_ptr<vsomeip::payload> its_payload = vsomeip::runtime::get()->create_payload();
@@ -56,6 +66,7 @@ void run()
 
 void on_message(const std::shared_ptr<vsomeip::message> &response)
 {
+std::cout << "CLIENT: on_message() : \n";
 std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();    //  Read the someip message payload to the its_payload variable
 vsomeip::length_t len = its_payload->get_length();  //  extracting the length of the payload
 
@@ -80,6 +91,7 @@ VideoWrite(receivedVideo);
 
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
 {
+    std::cout << "CLIENT: on_availability() : \n";
 //  Checking the availability of the service offered by the server
 //	    std::setw(4) -> set the width of hexadecimal number to 4
 //	    std::setfill(0) -> if the service id has less than 4 digits, fill the leading digits with 0s.
@@ -88,6 +100,7 @@ std::cout << "CLIENT: Service (Service.Instance) [" << std::setw(4) << std::setf
 
 if(is_available){
 //  Sending wake-up call for the waiting thread on the client side after the service is available
+std::cout << "on_availability : service is available, condition lock will now be removed.\n";
 condition.notify_one();
 }
 }
