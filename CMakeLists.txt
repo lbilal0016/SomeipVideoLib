@@ -22,11 +22,18 @@ include_directories (
     ${VSOMEIP3_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/Includes
+    ${CMAKE_CURRENT_SOURCE_DIR}/Includes/Someiplib
+    ${CMAKE_CURRENT_SOURCE_DIR}/Includes/Videolib
 )
 
-add_executable(service ./service.cpp Includes/ServiceLib.cpp Includes/VideoReadWrite.cpp Includes/VideoData.pb.cc)
-add_executable(Client ./Client.cpp Includes/ClientLib.cpp Includes/VideoReadWrite.cpp Includes/VideoData.pb.cc)
-#add_executable(Test ./testFunctionalities.cpp Includes/ServiceLib.cpp Includes/VideoReadWrite.cpp Includes/VideoData.pb.cc)
-target_link_libraries(Client vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf) 
+#   Compile service
+add_executable(service ./service.cpp Includes/Someiplib/ServiceLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc)
 target_link_libraries(service vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf)
+
+#   Compile client
+add_executable(Client ./Client.cpp Includes/Someiplib/ClientLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc)
+target_link_libraries(Client vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf) 
+
+#   Compile test
+#add_executable(Test ./testFunctionalities.cpp Includes/Someiplib/ServiceLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc)
 #target_link_libraries(Test vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf)
