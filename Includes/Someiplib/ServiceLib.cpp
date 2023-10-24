@@ -19,6 +19,7 @@ void set_application(std::shared_ptr<vsomeip::application> app)
 
 void on_message(const std::shared_ptr<vsomeip::message>& Request)
 {
+    std::cout << "on_message():\n";
     //  Reading the payload
     std::shared_ptr<vsomeip::payload> its_payload = Request->get_payload();
     //  Getting the payload length
