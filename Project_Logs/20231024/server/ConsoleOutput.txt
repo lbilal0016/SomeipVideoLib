@@ -1,0 +1,99 @@
+First Video:
+------------
+
+    ubuntu1@ubuntu1-VirtualBox:~/SomeipLibProject$ ./configure_and_run_server.sh 
+    ------------------------------------------------------------------------------
+    /home/ubuntu1/SomeipLibProject/TCP/server
+    Configuration for video input/output has been successfully defined.
+    2023-10-24 21:10:43.508176 [info] Using configuration folder: "/home/ubuntu1/SomeipLibProject/TCP/server".
+    2023-10-24 21:10:43.508666 [info] Parsed vsomeip configuration in 0ms
+    2023-10-24 21:10:43.508976 [info] Configuration module loaded.
+    2023-10-24 21:10:43.509071 [info] Initializing vsomeip (3.3.8) application "Server".
+    2023-10-24 21:10:43.509411 [info] Instantiating routing manager [Host].
+    2023-10-24 21:10:43.511115 [info] create_routing_root: Routing root @ /tmp/vsomeip-0
+    2023-10-24 21:10:43.512018 [info] Service Discovery enabled. Trying to load module.
+    2023-10-24 21:10:43.516967 [info] Service Discovery module loaded.
+    2023-10-24 21:10:43.517601 [info] Application(Server, 1111) is initialized (11, 100).
+    2023-10-24 21:10:43.517773 [info] OFFER(1111): [1777.5677:0.0] (true)
+    2023-10-24 21:10:43.518924 [info] create_local_server: Listening @ /tmp/vsomeip-1111
+    2023-10-24 21:10:43.519240 [info] Starting vsomeip application "Server" (1111) using 2 threads I/O nice 255
+    2023-10-24 21:10:43.520350 [info] Client [1111] routes unicast:192.168.178.97, netmask:255.255.255.0
+    2023-10-24 21:10:43.520354 [info] main dispatch thread id from application: 1111 (Server) is: 7f2062995640 TID: 7592
+    2023-10-24 21:10:43.523114 [info] Watchdog is disabled!
+    2023-10-24 21:10:43.521537 [info] shutdown thread id from application: 1111 (Server) is: 7f2062194640 TID: 7593
+    2023-10-24 21:10:43.524523 [info] io thread id from application: 1111 (Server) is: 7f20639938c0 TID: 7590
+    2023-10-24 21:10:43.524895 [info] io thread id from application: 1111 (Server) is: 7f2061192640 TID: 7595
+    2023-10-24 21:10:43.525426 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:10:43.526083 [info] Network interface "enp0s3" state changed: up
+    2023-10-24 21:10:43.526811 [info] Route "default route (0.0.0.0/0) if: enp0s3 gw: 192.168.178.1" state changed: up
+    2023-10-24 21:10:43.527437 [info] udp_server_endpoint_impl: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:10:43.527647 [debug] Joining to multicast group 224.244.224.245 from 192.168.178.97
+    2023-10-24 21:10:43.528342 [info] SOME/IP routing ready.
+    2023-10-24 21:10:43.528744 [warning] Route "224.244.224.245/32 if: enp0s3 gw: n/a" state changed: up
+    2023-10-24 21:10:43.528955 [info] udp_server_endpoint_impl<multicast>: SO_RCVBUF is: 212992 (1703936) local port:30490
+    on_message():
+    SERVICE: Received request with Client/Session [ 2222/0001]00 01 02 03 04 05 06 07 08 09 
+    Server: Input file is being read ... 
+    Video file opened successfully and is currently being read ...
+    2023-10-24 21:10:43.984631 [warning] BLOCKING CALL MESSAGE(1111): [1777.5677.0421:0001]
+    2023-10-24 21:10:43.996771 [info] dispatch thread id from application: 1111 (Server) is: 7f2053400640 TID: 7598
+    Input video file is being successfully read.
+    Video file is serialised and ready to be sent.
+    2023-10-24 21:10:53.541201 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:03.581428 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:13.589344 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:23.596148 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:24.814833 [warning] wait_until_sent: Maximum wait time for send operation exceeded for tse.
+
+Second Video:
+-------------
+
+    ubuntu1@ubuntu1-VirtualBox:~/SomeipLibProject$ ./configure_and_run_server.sh 
+    -----------------------------------------------------------------------------
+    /home/ubuntu1/SomeipLibProject/TCP/server
+    Configuration for video input/output has been successfully defined.
+    2023-10-24 21:11:32.716528 [info] Using configuration folder: "/home/ubuntu1/SomeipLibProject/TCP/server".
+    2023-10-24 21:11:32.735188 [info] Parsed vsomeip configuration in 3ms
+    2023-10-24 21:11:32.735415 [info] Configuration module loaded.
+    2023-10-24 21:11:32.735571 [info] Initializing vsomeip (3.3.8) application "Server".
+    2023-10-24 21:11:32.735942 [info] Instantiating routing manager [Host].
+    2023-10-24 21:11:32.803540 [info] create_routing_root: Routing root @ /tmp/vsomeip-0
+    2023-10-24 21:11:32.805907 [info] Service Discovery enabled. Trying to load module.
+    2023-10-24 21:11:32.846341 [info] Service Discovery module loaded.
+    2023-10-24 21:11:32.847624 [info] Application(Server, 1111) is initialized (11, 100).
+    2023-10-24 21:11:32.848287 [info] OFFER(1111): [1777.5677:0.0] (true)
+    2023-10-24 21:11:32.850951 [info] create_local_server: Listening @ /tmp/vsomeip-1111
+    2023-10-24 21:11:32.861894 [info] Starting vsomeip application "Server" (1111) using 2 threads I/O nice 255
+    2023-10-24 21:11:32.864983 [info] Client [1111] routes unicast:192.168.178.97, netmask:255.255.255.0
+    2023-10-24 21:11:32.865144 [info] main dispatch thread id from application: 1111 (Server) is: 7f58af795640 TID: 7602
+    2023-10-24 21:11:32.866396 [info] shutdown thread id from application: 1111 (Server) is: 7f58aef94640 TID: 7603
+    2023-10-24 21:11:32.869142 [info] Watchdog is disabled!
+    2023-10-24 21:11:32.896324 [info] io thread id from application: 1111 (Server) is: 7f58b03f58c0 TID: 7600
+    2023-10-24 21:11:32.897631 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:32.898137 [info] Network interface "enp0s3" state changed: up
+    2023-10-24 21:11:32.898667 [info] Route "default route (0.0.0.0/0) if: enp0s3 gw: 192.168.178.1" state changed: up
+    2023-10-24 21:11:32.899807 [info] udp_server_endpoint_impl: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:11:32.900511 [debug] Joining to multicast group 224.244.224.245 from 192.168.178.97
+    2023-10-24 21:11:32.901414 [info] SOME/IP routing ready.
+    2023-10-24 21:11:32.901852 [warning] Route "224.244.224.245/32 if: enp0s3 gw: n/a" state changed: up
+    2023-10-24 21:11:32.902575 [info] io thread id from application: 1111 (Server) is: 7f58adf92640 TID: 7605
+    2023-10-24 21:11:32.903649 [info] udp_server_endpoint_impl<multicast>: SO_RCVBUF is: 212992 (1703936) local port:30490
+    on_message():
+    SERVICE: Received request with Client/Session [ 2222/0001]00 01 02 03 04 05 06 07 08 09 
+    Server: Input file is being read ... 
+    2023-10-24 21:11:32.571468 [warning] BLOCKING CALL MESSAGE(1111): [1777.5677.0421:0001]
+    2023-10-24 21:11:32.573254 [info] dispatch thread id from application: 1111 (Server) is: 7f58ad1bc640 TID: 7606
+    Video file opened successfully and is currently being read ...
+    Input video file is being successfully read.
+    Video file is serialised and ready to be sent.
+    2023-10-24 21:11:42.006478 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:52.012601 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:12:01.651258 [warning] Network interface "enp0s3" state changed: up
+    2023-10-24 21:12:01.656879 [warning] Route "default route (0.0.0.0/0) if: enp0s3 gw: 192.168.178.1" state changed: up
+    2023-10-24 21:12:01.657758 [warning] Route "224.244.224.245/32 if: enp0s3 gw: n/a" state changed: up
+    2023-10-24 21:12:02.038052 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:12:12.100978 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:12:22.109268 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:12:32.279739 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:12:42.284382 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:12:52.290797 [info] vSomeIP 3.3.8 | (default)

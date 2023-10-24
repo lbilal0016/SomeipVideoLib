@@ -1,0 +1,116 @@
+First video:
+------------
+
+    ubuntu1@ubuntu1-VirtualBox:~/SomeipLibProject$ ./configure_and_run_client.sh
+    -----------------------------------------------------------------------------
+    
+    /home/ubuntu1/SomeipLibProject/TCP/client
+    Configuration for video input/output has been successfully defined.
+    2023-10-24 21:10:38.049552 [info] Using configuration folder: "/home/ubuntu1/SomeipLibProject/TCP/client".
+    2023-10-24 21:10:38.051211 [info] Parsed vsomeip configuration in 3ms
+    2023-10-24 21:10:38.051835 [info] Configuration module loaded.
+    2023-10-24 21:10:38.052394 [info] Initializing vsomeip (3.3.8) application "Client".
+    2023-10-24 21:10:38.053055 [info] Instantiating routing manager [Host].
+    2023-10-24 21:10:38.055883 [info] create_routing_root: Routing root @ /tmp/vsomeip-0
+    2023-10-24 21:10:38.057431 [info] Service Discovery enabled. Trying to load module.
+    2023-10-24 21:10:38.124321 [info] Service Discovery module loaded.
+    2023-10-24 21:10:38.126651 [info] Application(Client, 2222) is initialized (11, 100).
+    2023-10-24 21:10:38.127496 [info] REQUEST(2222): [1777.5677:255.4294967295]
+    2023-10-24 21:10:38.130122 [info] create_local_server: Listening @ /tmp/vsomeip-2222
+    2023-10-24 21:10:38.180449 [info] Starting vsomeip application "Client" (2222) using 2 threads I/O nice 255
+    CLIENT: run() : 
+    2023-10-24 21:10:38.188176 [info] Client [2222] routes unicast:192.168.178.96, netmask:255.255.255.0
+    2023-10-24 21:10:38.188888 [info] shutdown thread id from application: 2222 (Client) is: 7f0b9b9fc640 TID: 11716
+    2023-10-24 21:10:38.190918 [info] main dispatch thread id from application: 2222 (Client) is: 7f0b9c1fd640 TID: 11715
+    2023-10-24 21:10:38.221714 [info] Watchdog is disabled!
+    CLIENT: on_availability() : 
+    CLIENT: Service (Service.Instance) [1777.5677] is NOT available
+    2023-10-24 21:10:38.234349 [info] io thread id from application: 2222 (Client) is: 7f0b9d9c18c0 TID: 11712
+    2023-10-24 21:10:38.237167 [info] io thread id from application: 2222 (Client) is: 7f0b9a9fa640 TID: 11718
+    2023-10-24 21:10:38.239293 [info] Network interface "enp0s3" state changed: up
+    2023-10-24 21:10:38.240321 [info] Route "default route (0.0.0.0/0) if: enp0s3 gw: 192.168.178.1" state changed: up
+    2023-10-24 21:10:38.241474 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:10:38.244176 [info] udp_server_endpoint_impl: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:10:38.245729 [info] udp_server_endpoint_impl<multicast>: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:10:38.252838 [info] SOME/IP routing ready.
+    2023-10-24 21:10:38.255218 [warning] Route "224.244.224.245/32 if: enp0s3 gw: n/a" state changed: up
+    2023-10-24 21:10:43.297732 [info] endpoint_manager_impl::create_remote_client: 192.168.178.97:30509 reliable: 1 using local port: 0
+    CLIENT: on_availability() : 
+    CLIENT: Service (Service.Instance) [1777.5677] is available
+    on_availability : service is available, condition lock will now be removed.
+    CLIENT: lock is removed
+    2023-10-24 21:10:48.329889 [warning] Didn't receive a multicast SD message for 2200ms.
+    2023-10-24 21:10:48.339620 [info] udp_server_endpoint_impl<multicast>: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:10:48.375785 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:10:50.671630 [info] tce: recv_buffer size is: 154031901 local: 192.168.178.96:42903 remote: 192.168.178.97:30509
+    CLIENT: on_message() : 
+    2023-10-24 21:10:51.548457 [warning] BLOCKING CALL MESSAGE(2222): [1777.5677.0421:0001]
+    2023-10-24 21:10:51.551321 [info] dispatch thread id from application: 2222 (Client) is: 7f0b9a1f9640 TID: 11719
+    CLIENT: Received message with Client/Session [2222/0001]
+    Converting raw video data into readable video ... 
+    2023-10-24 21:10:58.381505 [info] vSomeIP 3.3.8 | (default)
+    Received raw video is now converted into an opencv object, and is ready to be written.
+    Client : Video file is received and ready to be saved locally...
+    OpenCV: FFMPEG: tag 0x34363258/'X264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+    OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+    Writing the output ...
+    2023-10-24 21:11:08.421525 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:18.472874 [info] vSomeIP 3.3.8 | (default)
+
+Second video:
+-------------
+
+    ubuntu1@ubuntu1-VirtualBox:~/SomeipLibProject$ ./configure_and_run_client.sh 
+    ----------------------------------------------------------------------------
+
+    /home/ubuntu1/SomeipLibProject/TCP/client
+    Configuration for video input/output has been successfully defined.
+    2023-10-24 21:11:29.936285 [info] Using configuration folder: "/home/ubuntu1/SomeipLibProject/TCP/client".
+    2023-10-24 21:11:29.937209 [info] Parsed vsomeip configuration in 3ms
+    2023-10-24 21:11:29.937467 [info] Configuration module loaded.
+    2023-10-24 21:11:29.937669 [info] Initializing vsomeip (3.3.8) application "Client".
+    2023-10-24 21:11:29.938028 [info] Instantiating routing manager [Host].
+    2023-10-24 21:11:29.948240 [info] create_routing_root: Routing root @ /tmp/vsomeip-0
+    2023-10-24 21:11:29.949301 [info] Service Discovery enabled. Trying to load module.
+    2023-10-24 21:11:29.966026 [info] Service Discovery module loaded.
+    2023-10-24 21:11:29.966896 [info] Application(Client, 2222) is initialized (11, 100).
+    2023-10-24 21:11:29.967188 [info] REQUEST(2222): [1777.5677:255.4294967295]
+    2023-10-24 21:11:29.969870 [info] create_local_server: Listening @ /tmp/vsomeip-2222
+    2023-10-24 21:11:29.971350 [info] Starting vsomeip application "Client" (2222) using 2 threads I/O nice 255
+    2023-10-24 21:11:29.972780 [info] Client [2222] routes unicast:192.168.178.96, netmask:255.255.255.0
+    CLIENT: run() : 
+    2023-10-24 21:11:29.975765 [info] shutdown thread id from application: 2222 (Client) is: 7f4ff08fc640 TID: 11762
+    2023-10-24 21:11:29.976753 [info] main dispatch thread id from application: 2222 (Client) is: 7f4ff10fd640 TID: 11761
+    2023-10-24 21:11:29.978381 [info] Watchdog is disabled!
+    2023-10-24 21:11:29.979474 [info] io thread id from application: 2222 (Client) is: 7f4ff255f8c0 TID: 11758
+    CLIENT: on_availability() : 
+    CLIENT: Service (Service.Instance) [1777.5677] is NOT available
+    2023-10-24 21:11:29.982823 [info] Network interface "enp0s3" state changed: up
+    2023-10-24 21:11:29.983594 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:29.984051 [info] Route "default route (0.0.0.0/0) if: enp0s3 gw: 192.168.178.1" state changed: up
+    2023-10-24 21:11:29.985066 [info] io thread id from application: 2222 (Client) is: 7f4feb7fe640 TID: 11764
+    2023-10-24 21:11:29.986958 [info] udp_server_endpoint_impl: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:11:29.987559 [info] SOME/IP routing ready.
+    2023-10-24 21:11:29.987973 [warning] Route "224.244.224.245/32 if: enp0s3 gw: n/a" state changed: up
+    2023-10-24 21:11:29.989197 [info] udp_server_endpoint_impl<multicast>: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:11:32.944034 [info] endpoint_manager_impl::create_remote_client: 192.168.178.97:30509 reliable: 1 using local port: 0
+    CLIENT: on_availability() : 
+    CLIENT: Service (Service.Instance) [1777.5677] is available
+    on_availability : service is available, condition lock will now be removed.
+    CLIENT: lock is removed
+    2023-10-24 21:11:37.983566 [warning] Didn't receive a multicast SD message for 2200ms.
+    2023-10-24 21:11:37.989628 [info] udp_server_endpoint_impl<multicast>: SO_RCVBUF is: 212992 (1703936) local port:30490
+    2023-10-24 21:11:38.601300 [info] tce: recv_buffer size is: 154031901 local: 192.168.178.96:43797 remote: 192.168.178.97:30509
+    2023-10-24 21:11:39.984551 [info] vSomeIP 3.3.8 | (default)
+    CLIENT: on_message() : 
+    2023-10-24 21:11:39.230862 [warning] BLOCKING CALL MESSAGE(2222): [1777.5677.0421:0001]
+    2023-10-24 21:11:39.233665 [info] dispatch thread id from application: 2222 (Client) is: 7f4feaffd640 TID: 11765
+    CLIENT: Received message with Client/Session [2222/0001]
+    Converting raw video data into readable video ... 
+    Received raw video is now converted into an opencv object, and is ready to be written.
+    Client : Video file is received and ready to be saved locally...
+    OpenCV: FFMPEG: tag 0x34363258/'X264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+    OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+    Writing the output ...
+    2023-10-24 21:11:49.000342 [info] vSomeIP 3.3.8 | (default)
+    2023-10-24 21:11:59.011197 [info] vSomeIP 3.3.8 | (default)
