@@ -86,6 +86,8 @@ void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, b
 std::cout << "CLIENT: Service (Service.Instance) [" << std::setw(4) << std::setfill('0') << std::hex 
 << Service << "." << Instance << "] is " << (is_available ? "available" : "NOT available") << std::endl;
 
+if(is_available){
 //  Sending wake-up call for the waiting thread on the client side after the service is available
 condition.notify_one();
+}
 }
