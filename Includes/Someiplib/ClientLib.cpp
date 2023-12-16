@@ -12,6 +12,7 @@
 //std::shared_ptr< vsomeip::application > app;
 std::mutex mutex;
 std::condition_variable condition;
+std::condition_variable condition_detection;
 
 
 //  This function passes the someip application object from the Client executable to this object code
@@ -87,6 +88,9 @@ VideoData receivedVideo = DeserialiseVideoData(received_video_raw);
 std::cout << "Client : Video file is received and ready to be saved locally...\n";
 
 VideoWrite(receivedVideo);
+
+//  remove the lock on the object detection after video is written successfully.
+condition_detection.notify_one();
 }
 
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
@@ -103,4 +107,56 @@ if(is_available){
 std::cout << "on_availability : service is available, condition lock will now be removed.\n";
 condition.notify_one();
 }
+}
+
+//  This function reads the configuration file in which input and output directories for the videos are set
+void SomeIpLib::ReadConfigFile(const std::string &ConfigFile)
+{
+    CONFIGURATION_VIDEO_IO = ConfigFile;
+    std::cout << "CLIENT: Video configuration for someip library has been successfully defined.\n";
+}
+
+void run_detection()
+{
+    std::unique_lock<std::mutex> lock_detection(mutex);
+    condition_detection.wait(lock_detection);
+
+    //  lock for the object detection is removed
+    std::cout << "CLIENT : Object detection is running ...\n";
+
+
+    /*  FURTHER STEPS: 
+
+    1.  Engineer a function for checking whether the received video can be opened */
+    std::string Path_to_video = ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO);
+    CheckVideoFile(Path_to_video);
+
+    /*
+    2. Obtain the json configuration file for object detection*/ 
+    std::string Path_to_detection_Json = ConfigureInputOutput("Detection", CONFIGURATION_VIDEO_IO);
+    
+    /*
+    3.  Using the configuration file, carry out detection process*/
+    std::vector<object_type_t> detected_objects;
+    DetectObjectsFromJson(Path_to_detection_Json, detected_objects);
+
+    /*
+    4.  Call the send_data function to send the quasi-detected objects and their quantities as events   */
+    for (auto& objects : detected_objects)
+    {
+        send_data(objects);
+    }
+}
+
+void send_data(object_type_t &object_data) {
+
+  std::shared_ptr<vsomeip::payload> payload = vsomeip::runtime::get() -> create_payload();
+  std::vector<vsomeip::byte_t> payload_data;
+
+  payload_data.push_back(object_data.type);
+  payload_data.push_back(object_data.count);
+  payload_data.push_back(object_data.time);
+
+  payload->set_data(payload_data);
+  this_app->notify(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, payload);
 }

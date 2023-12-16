@@ -24,6 +24,12 @@ struct VideoData
     bool frameSizeCaptured;
 };
 
+typedef struct object_type{
+    char type;
+    int count;
+    float time;
+}object_type_t;
+
 //  Reads the video capture object in the first argument into the second argument struct
 void VideoRead(VideoData &InputVideoData);
 
@@ -46,3 +52,9 @@ VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector);
 
 //  This function is included to test the json string which is used for serialisation and deserialisation of video data
 bool isJsonValid(const std::string& jsonString);
+
+//  This function is used to check whether a specific video file can b
+void CheckVideoFile(std::string &VideoPath);
+
+//  This function reads the quasi-detected objects from a json configuration file and writes them into a object_type_t variable
+void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<object_type_t>& objects);

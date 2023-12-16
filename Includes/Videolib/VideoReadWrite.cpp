@@ -92,9 +92,23 @@ std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string
 
         Result = outputConfig["OutputFile"];
     }
+    //  Configure Detection Json file  
+    else if(typeInputOutput.compare("Detection") == 0){
+        json detectionConfig;
+        std::ifstream detectionConfigFile(ConfigFile);
+        if(!detectionConfigFile.is_open())
+        {
+            std::cerr << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+            throw std::runtime_error("Error: Configuration file could not be opened.\n");
+        }
+        detectionConfigFile >> detectionConfig;
+        detectionConfigFile.close();
+
+        Result = detectionConfig["Detection"];
+    }
     //  False argument to the function
     else{
-        std::cerr << "Error: Input argument to the function ConfigureInputOutput is not correct. Correct usage is Input or Output.\n";
+        std::cerr << "Error: Input argument to the function ConfigureInputOutput is not correct. Correct usage is Input, Output, or Detection.\n";
         throw std::runtime_error("Error: Wrong argument to functon ConfigureInputOutput.\n");
     }
 
@@ -184,4 +198,80 @@ VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector)
 
     //  Returning receivedVideo struct
     return receivedVideo;
+}
+
+void CheckVideoFile(std::string &VideoPath)
+{
+    VideoCapture VideoCap(VideoPath);
+
+    //  Checking against opening the file
+    if(!VideoCap.isOpened()){
+        std::cerr << "Error: Video file could not be opened.\n";
+        throw std::runtime_error("Error: Video file read is not successful.\n");
+    }
+}
+
+void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<object_type_t>& objects)
+{
+    //  Convert json file into a filestream object
+    std::ifstream file(JsonPathDetection);
+
+    //  Check whether the json file can be opened
+    if(!file.is_open()){
+        std::cerr << "Error opening json file for object detection:" << JsonPathDetection 
+        << "Please ensure that a proper json file is available in the right directory.\n";
+    return;
+    }
+
+    try
+    {
+        json DetectionJson;
+        file >> DetectionJson;
+
+        if(DetectionJson.find("objects") != DetectionJson.end()){
+            for (const auto& entry : DetectionJson["objects"])
+            {
+                object_type_t obj;
+                //  Get object type
+                if(entry["name"].get<std::string>().compare("vehicle") == 0)
+                {
+                    obj.type = 'v';
+                }
+                else if(entry["name"].get<std::string>().compare("human") == 0)
+                {
+                    obj.type = 'h';
+                }
+                else if(entry["name"].get<std::string>().compare("animal") == 0)
+                {
+                    obj.type = 'a';
+                }                
+                else if(entry["name"].get<std::string>().compare("sidewalk") == 0)
+                {
+                    obj.type = 's';
+                }
+                else{   //  object undefined
+                    obj.type = 'u';
+                }
+                
+                //  Get number of identified object
+                obj.count = entry["number"].get<int>();
+
+                //  Get the time instance in which detection of identified object took place
+                obj.time = entry["time"].get<float>();
+
+                //  Load identified object into the objects vector
+                objects.push_back(obj);
+            }
+        }
+        else{
+            std::cerr << "Error: 'objects' field not found in JSON file.\n";
+        }
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << "Error parsing Json: " <<e.what() << '\n';
+    }
+
+//  Close configuration file
+file.close();
 }
