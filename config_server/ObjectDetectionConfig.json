@@ -1,0 +1,15 @@
+{
+    "objects" : 
+   [
+       {
+           "name" : "vehicle",
+           "number" : 1,
+           "time"   :   0.2
+       },
+       {
+            "name"  :   "human",
+            "number" :  2,
+            "time"  :   1.1
+       }
+   ]
+}
