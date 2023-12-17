@@ -246,6 +246,36 @@
                 "request_response_delay" : "1500"
             }
         }
+
+    /SomeipLibProject/config_server/
+    --------------------------------
+        VideoConfig.json:
+        -----------------
+        {
+        "InputFile" : "/home/ubuntu1/SomeipLibProject/ServerSpace/sample-5s_soundless.mp4",
+        "OutputFile" : "/home/ubuntu1/SomeipLibProject/ClientSpace/Output.mp4",
+        "Detection" : "/home/ubuntu1/SomeipLibProject/config_client/ObjectDetectionConfig.json"
+        }
+
+        ObjectDetectionConfig.json:
+        ---------------------------
+        {
+            "objects" : 
+        [
+            {
+                "name" : "vehicle",
+                "number" : 1,
+                "time"   :   0.2
+            },
+            {
+                    "name"  :   "human",
+                    "number" :  2,
+                    "time"  :   1.1
+            }
+        ]
+        }
+
+
     /SomeipLibProject/Includes/
     ---------------------------
         /SomeipLibProject/Includes/Someiplib
