@@ -275,3 +275,29 @@ void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<obj
 //  Close configuration file
 file.close();
 }
+
+VideoReadWrite::Detection_Object::Detection_Object(object_type_t object): m_object(object)
+{}
+
+VideoReadWrite::Detection_Object::~Detection_Object()
+{}
+
+
+void VideoReadWrite::Detection_Object::print_object() const
+{
+    /*  CONSOLE OUTPUT FOR DETECTED OBJECT  */
+    if(m_object.count != 1 && m_object.count > 0)
+    {   //  Detected object has multiple instances
+        std::cout << m_object.count << " objects of type : " << m_object.type <<
+        "are detected at time " << m_object.time << "s.\n";
+    }
+    else if(m_object.count == 0)
+    {   //  There is a problem with the detection, so that an object has been detected with count = 0
+        std::cout << "Error at detection, an object with no count was identified!\n";
+    }
+    else
+    {   //  A single object was detected
+        std::cout << "An object of type : " << m_object.type <<
+        "is detected at time " << m_object.time << "s.\n";
+    }
+}
