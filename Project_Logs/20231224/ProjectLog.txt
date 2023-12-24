@@ -1068,3 +1068,9 @@
 
             //  This function reads the quasi-detected objects from a json configuration file and writes them into a object_type_t variable
             void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<object_type_t>& objects);
+
+
+Observations:
+-------------
+
+Both executables were compiled successfully.
