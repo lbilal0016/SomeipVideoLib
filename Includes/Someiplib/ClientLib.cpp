@@ -112,7 +112,7 @@ condition.notify_one();
 //  This function reads the configuration file in which input and output directories for the videos are set
 void SomeIpLib::ReadConfigFile(const std::string &ConfigFile)
 {
-    CONFIGURATION_VIDEO_IO = ConfigFile;
+    CONFIGURATION_VIDEO_DETECTION = ConfigFile;
     std::cout << "CLIENT: Video configuration for someip library has been successfully defined.\n";
 }
 
@@ -128,12 +128,12 @@ void run_detection()
     /*  FURTHER STEPS: 
 
     1.  Engineer a function for checking whether the received video can be opened */
-    std::string Path_to_video = ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO);
+    std::string Path_to_video = ConfigureInputOutput("Output", CONFIGURATION_VIDEO_DETECTION);
     CheckVideoFile(Path_to_video);
 
     /*
     2. Obtain the json configuration file for object detection*/ 
-    std::string Path_to_detection_Json = ConfigureInputOutput("Detection", CONFIGURATION_VIDEO_IO);
+    std::string Path_to_detection_Json = ConfigureInputOutput("Detection", CONFIGURATION_VIDEO_DETECTION);
     
     /*
     3.  Using the configuration file, carry out detection process*/

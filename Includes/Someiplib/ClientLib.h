@@ -25,7 +25,9 @@
 //  Comment out the following line if UDP communication is wished
 #define TCP_COMMUNICATION
 
-static std::string CONFIGURATION_VIDEO_IO;
+static std::string CONFIGURATION_VIDEO_DETECTION;
+
+using  Detection_Object = VideoReadWrite::Detection_Object;
 
 void run(); //  vsomeip client thread
 void on_message(const std::shared_ptr<vsomeip::message> &response);
