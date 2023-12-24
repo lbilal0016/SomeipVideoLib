@@ -30,6 +30,8 @@ typedef struct object_type{
     float time;
 }object_type_t;
 
+
+
 //  Reads the video capture object in the first argument into the second argument struct
 void VideoRead(VideoData &InputVideoData);
 
@@ -41,7 +43,23 @@ std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string
 
 namespace VideoReadWrite{
 //  This function reads the configuration file to be used from the main function
+
 void ReadConfigFile(const std::string &ConfigFile);
+
+//  This class performs operations on the detected objects which are sent from the client side
+class Detection_Object
+{
+public:
+Detection_Object(object_type_t object); //  Constructor
+
+void print_object() const;  //  Print method for received detected objects
+
+~Detection_Object();    //  Deconstructor
+
+private:
+object_type_t m_object;
+};
+
 }
 
 //  This function serialises VideoData struct to an std::vector<uint8_t> and returns that object
