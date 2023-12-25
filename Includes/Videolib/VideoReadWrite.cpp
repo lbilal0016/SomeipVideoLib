@@ -205,6 +205,7 @@ void CheckVideoFile(std::string &VideoPath)
     VideoCapture VideoCap(VideoPath);
 
     //  Checking against opening the file
+    std::cout << "CLIENT/SERVER : Video file is currently being checked against openability.\n";
     if(!VideoCap.isOpened()){
         std::cerr << "Error: Video file could not be opened.\n";
         throw std::runtime_error("Error: Video file read is not successful.\n");
