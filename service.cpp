@@ -33,6 +33,15 @@ int main(int argc, char *argv[])
     app->init();
     app->register_message_handler(SAMPLE_SERVICE_ID,SAMPLE_INSTANCE_ID,SAMPLE_METHOD_ID, on_message);
     app->offer_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);
-    set_application(app);   //  Added for compatibility when client functions are packed in another object code.
+
+
+    //  Service discovery for object detection service on the client side
+    app->register_availability_handler(vsomeip::ANY_SERVICE, vsomeip::ANY_INSTANCE, on_availability_event);
+    app->request_service(EVENT_SERVICE_ID,EVENT_INSTANCE_ID);
+    app->register_message_handler(EVENT_SERVICE_ID,EVENT_INSTANCE_ID, vsomeip::ANY_METHOD, on_message_event);
+        
+    std::thread detection(run_events);
+    set_application(app);   //  Added for compatibility when service functions are packed in another object code.
+
     app->start();
 }
