@@ -120,7 +120,7 @@ void run_detection()
 {
     std::unique_lock<std::mutex> lock_detection(mutex);
     condition_detection.wait(lock_detection);
-
+    
     //  lock for the object detection is removed
     std::cout << "CLIENT : Object detection is running ...\n";
 
@@ -141,6 +141,11 @@ void run_detection()
     DetectObjectsFromJson(Path_to_detection_Json, detected_objects);
 
     /*
+    3.a.    Offer events from the clients' side
+    */
+    offer_client_event();
+
+    /*
     4.  Call the send_data function to send the quasi-detected objects and their quantities as events   */
     for (auto& objects : detected_objects)
     {
@@ -159,4 +164,19 @@ void send_data(object_type_t &object_data) {
 
   payload->set_data(payload_data);
   this_app->notify(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, payload);
+}
+
+void offer_client_event()
+{
+    //  Offering events as service
+    this_app->offer_service(EVENT_SERVICE_ID, EVENT_INSTANCE_ID);
+    //  Creating a set of event groups
+    std::set<vsomeip::eventgroup_t> its_groups;
+    its_groups.insert(EVENT_GROUP_ID);   //  Adding group id
+    //  Offer event
+    this_app->offer_event(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, its_groups, vsomeip_v3::event_type_e::ET_EVENT, 
+    std::chrono::milliseconds(1000),false,true,nullptr, vsomeip_v3::reliability_type_e::RT_UNKNOWN);
+
+    //  LOG MESSAGE
+    std::cout << "CLIENT: Object detection events are now ready to be offered.\n";
 }
