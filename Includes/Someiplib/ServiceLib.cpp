@@ -111,8 +111,10 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
 
 void run_events()
 {
+    std::cout << "SERVER: run_events() is currently being hold.\n";
     std::unique_lock<std::mutex> lock_events(mutex);
     condition.wait(lock_events);
+    std::cout << "SERVER: run_events() is now released.\n";
 
     std::set<vsomeip::eventgroup_t> event_groups;
     event_groups.insert(EVENT_GROUP_ID);
