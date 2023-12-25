@@ -42,4 +42,7 @@ namespace SomeIpLib{
 void ReadConfigFile(const std::string &ConfigFile);
 }
 
+//  This function is called, when client is ready to offer object detection events.
+void offer_client_event();
+
 #endif
