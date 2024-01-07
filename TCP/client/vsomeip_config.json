@@ -15,6 +15,33 @@
             "id" : "0x2222"
         } 
     ],
+    "services" :
+    [
+        {
+            "service" : "0x1000",
+            "instance" : "0x3000",
+            "unreliable" : "30509",
+            "events" : 
+            [
+                {
+                "event" : "0x8778",
+                "is_field" : "false"
+                }
+            ],
+            "eventgroups" : 
+            [
+                {
+                    "eventgroup" : "4465",
+                    "events" : [ "0x8778" ],
+                    "multicast" : 
+                    {
+                        "address" : "224.225.226.233",
+                        "port" : "32344"
+                    }
+                }
+            ]
+        }
+    ],
     "routing" : "Client",
     "service-discovery" :
     {
