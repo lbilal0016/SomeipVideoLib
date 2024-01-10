@@ -290,7 +290,7 @@ void VideoReadWrite::Detection_Object::print_object() const
     if(m_object.count != 1 && m_object.count > 0)
     {   //  Detected object has multiple instances
         std::cout << m_object.count << " objects of type : " << m_object.type <<
-        "are detected at time " << m_object.time << "s.\n";
+        " are detected at time " << m_object.time << "s.\n";
     }
     else if(m_object.count == 0)
     {   //  There is a problem with the detection, so that an object has been detected with count = 0
@@ -299,6 +299,6 @@ void VideoReadWrite::Detection_Object::print_object() const
     else
     {   //  A single object was detected
         std::cout << "An object of type : " << m_object.type <<
-        "is detected at time " << m_object.time << "s.\n";
+        " is detected at time " << m_object.time << "s.\n";
     }
 }
