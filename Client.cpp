@@ -39,13 +39,15 @@ int main(int argc, char *argv[]) {
     app->register_availability_handler(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID, on_availability);
     app->request_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);
     app->register_message_handler(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID, SAMPLE_METHOD_ID, on_message);
+    app->register_message_handler(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_METHOD_ID, on_message_event);
 
     //  OBJECT DETECTION EVENTS
-    //offer_client_event();
+    offer_client_event();
     
     std::thread sender(run);
     std::thread object_detection(run_detection);
 
     app->start();
+    
     //object_detection.join();    //  Terminate the object_detection function somewhere
 }
