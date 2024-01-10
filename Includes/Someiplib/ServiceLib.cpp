@@ -92,21 +92,64 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
    std::setw(4) << std::setfill('0') << std::hex <<
    event_message->get_method() << "] to ClientID/Session [" <<
    std::setw(4) << std::setfill('0') << std::hex <<
-   event_message->get_client() <<
+   event_message->get_client() << "." <<
    std::setw(4) << std::setfill('0') << std::hex <<
-   event_message->get_session() << "]" << std::endl;
+   event_message->get_session() << "] = ";
 
     /*  WRITE THE DATA FROM EVENT_MESSAGE INTO AN OBJECT_TYPE_T VARIABLE  */
     std::shared_ptr<vsomeip::payload> message_payload = event_message->get_payload();
+    vsomeip::length_t len = message_payload->get_length();
 
-    object_type_t detected_object;
-    detected_object.type = (char)*(message_payload->get_data());
+    message << "(" << std::dec << len << ") ";
+    for (uint32_t i = 0; i < len; ++i){
+        message << std::hex << std::setw(2) << std::setfill('0')
+        << (int) message_payload->get_data()[i] << " ";
+    }
+    std::cout << message.str() << std::endl;
+
+    static object_type_t detected_object;  //  content of current event message
+    static object_type_t detected_object_old;   //  content of previous event message
+
+
+/*  DIDN'T WORK, DATE = 10.01.2024*/
+    detected_object.type = static_cast<char>((int)*(message_payload->get_data()));
     detected_object.count = (int)*(message_payload->get_data() + 1);
-    detected_object.time = (float)*(message_payload->get_data() + 2);
+    detected_object.time = static_cast<float>((int)*(message_payload->get_data() + 2));
 
+
+/*  DIDN'T WORK, DATE = 10.04.2024
+    std::vector<int> payload_buffer;
+    for(int i = 0; i < message_payload->get_length();++i)
+    {
+        payload_buffer.push_back((int) (message_payload->get_data()[i]));
+    }
+
+    detected_object.type = (payload_buffer[0]);
+    detected_object.count = payload_buffer[1];
+    detected_object.type = (payload_buffer[2]);
+*/
+
+/*  DIDN'T WORK, DATE = 10-01-2024
+    std::vector<vsomeip::byte_t> detected_object_raw(message_payload->get_data(), message_payload->get_data() + message_payload->get_length());
+
+    detected_object.type = (char)detected_object_raw[0];
+    detected_object.count = (int)detected_object_raw[1];
+    detected_object.count = (float)detected_object_raw[2];
+*/  
+
+    if( detected_object.type != detected_object_old.type ||
+        detected_object.count != detected_object_old.count ||
+        detected_object.time != detected_object_old.time)
+    {
     Detection_Object Captured_object(detected_object);
+    std::cout << "Content: ";
     Captured_object.print_object();
     Captured_object.~Detection_Object();
+    }
+
+    detected_object_old.type = detected_object.type;
+    detected_object_old.count = detected_object.count;
+    detected_object_old.time = detected_object.time;
 }
 
 void run_events()
@@ -118,6 +161,6 @@ void run_events()
 
     std::set<vsomeip::eventgroup_t> event_groups;
     event_groups.insert(EVENT_GROUP_ID);
-    this_app->request_event(EVENT_SERVICE_ID, EVENT_INSTANCE_ID,EVENT_ID, event_groups, vsomeip::event_type_e::ET_UNKNOWN);
+    this_app->request_event(EVENT_SERVICE_ID, EVENT_INSTANCE_ID,EVENT_ID, event_groups, vsomeip::event_type_e::ET_FIELD);
     this_app->subscribe(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_GROUP_ID);
 }
