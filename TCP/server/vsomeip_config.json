@@ -3,7 +3,7 @@
    "netmask" : "255.255.255.0",
    "logging" :
    {
-       "level" : "debug",
+       "level" : "warning",
        "console" : "true",
        "file" : { "enable" : "false", "path" : "/var/log/vsomeip.log" },
        "dlt" : "false"
@@ -16,6 +16,14 @@
            "threads" : 2
        } 
    ],
+   "clients" : 
+   [
+    {
+    "service" : "0x1000",
+    "instance" : "0x3000",
+    "unreliable" : [4000 , 40002]
+    }
+],
    "services":
    [
     {
