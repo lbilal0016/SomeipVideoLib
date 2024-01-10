@@ -1,0 +1,32 @@
+ubuntu1@ubuntu1-VirtualBox:~/SomeipLibProject$ ./configure_and_run_client.sh 
+/home/ubuntu1/SomeipLibProject/TCP/client
+Configuration for video input/output has been successfully defined.
+CLIENT: Video configuration for someip library has been successfully defined.
+2024-01-10 19:40:18.960424 [warning] Reliability type for event [1000.3000.8778] was not configured Using : RT_UNRELIABLE
+CLIENT: Object detection events are now ready to be offered.
+CLIENT: run() : 
+CLIENT: on_availability() : 
+CLIENT: Service (Service.Instance) [1777.5677] is NOT available
+CLIENT: on_availability() : 
+CLIENT: Service (Service.Instance) [1777.5677] is available
+on_availability : service is available, condition lock will now be removed.
+CLIENT: lock is removed
+CLIENT: on_message() : 
+2024-01-10 19:40:27.097088 [warning] BLOCKING CALL MESSAGE(2222): [1777.5677.0421:0001]
+CLIENT: Received message with Client/Session [2222/0001]
+Converting raw video data into readable video ... 
+Received raw video is now converted into an opencv object, and is ready to be written.
+Client : Video file is received and ready to be saved locally...
+OpenCV: FFMPEG: tag 0x34363258/'X264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+Writing the output ...
+Output file is written in the following directory: /home/ubuntu1/SomeipLibProject/ClientSpace/Output.mp4
+CLIENT : Object detection is running ...
+CLIENT/SERVER : Video file is currently being checked against openability.
+Path_to_detection_Json was configured as : /home/ubuntu1/SomeipLibProject/config_client/ObjectDetectionConfig.json
+2024-01-10 19:40:55.955484 [warning] routing_manager_impl::handle_local_offer_service: Application: 2222 is offering: [1000.3000.0.0] offered previously by itself.
+CLIENT: Object detection events are now ready to be offered.
+CLIENT: Sending data ... 
+An object of type : v is detected at time 0.2s.
+CLIENT: Sending data ... 
+3 objects of type : h are detected at time 1.1s.

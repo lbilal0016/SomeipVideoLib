@@ -1,0 +1,22 @@
+ubuntu1@ubuntu1-VirtualBox:~/SomeipLibProject$ ./configure_and_run_server.sh 
+/home/ubuntu1/SomeipLibProject/TCP/server
+Configuration for video input/output has been successfully defined.
+SERVER: run_events() is currently being hold.
+SERVICE: Service[1777.5677] is available.
+SERVICE: Condition lock will now be removed, since Service[1777.5677] is available now.
+SERVER: run_events() is now released.
+2024-01-10 19:40:18.631285 [warning] sd::get_eventgroup_reliability: couldn't determine eventgroup reliability type for [1000.3000.4465] using reliability type:  0002
+SERVICE: Service[1000.3000] is available.
+SERVICE: Condition lock will now be removed, since Service[1000.3000] is available now.
+on_message():
+SERVICE: Received request with Client/Session [ 2222/0001]00 01 02 03 04 05 06 07 08 09 
+Server: Input file is being read ... 
+2024-01-10 19:40:18.711426 [warning] BLOCKING CALL MESSAGE(1111): [1777.5677.0421:0001]
+Video file opened successfully and is currently being read ...
+Input video file is being successfully read.
+2024-01-10 19:40:23.936120 [warning] Didn't receive a multicast SD message for 2200ms.
+Video file is serialised and ready to be sent.
+SERVICE: A notification for event [1000.3000.8778] to ClientID/Session [0000.0002] = (3) 76 01 00 
+Content: An object of type : v is detected at time 0s.
+SERVICE: A notification for event [1000.3000.8778] to ClientID/Session [0000.0003] = (3) 68 03 01 
+Content: 3 objects of type : h are detected at time 1s.
