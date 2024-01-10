@@ -134,7 +134,8 @@ void run_detection()
     /*
     2. Obtain the json configuration file for object detection*/ 
     std::string Path_to_detection_Json = ConfigureInputOutput("Detection", CONFIGURATION_VIDEO_DETECTION);
-    
+    std::cout << "Path_to_detection_Json was configured as : " << Path_to_detection_Json << std::endl;
+
     /*
     3.  Using the configuration file, carry out detection process*/
     std::vector<object_type_t> detected_objects;
@@ -143,26 +144,47 @@ void run_detection()
     /*
     3.a.    Offer events from the clients' side
     */
-    offer_client_event();
+
+    //offer_client_event();
+
+    //  TEST OF PRINTING DETECTED OBJECTS
+    /*for(const auto &objects : detected_objects)
+    {
+        Detection_Object test_objects(objects);
+        test_objects.print_object();
+    }*/
 
     /*
     4.  Call the send_data function to send the quasi-detected objects and their quantities as events   */
+    
     for (auto& objects : detected_objects)
     {
+        std::cout << "CLIENT: Sending data ... \n";
         send_data(objects);
+        //  TEST OF SENDING DETECTED OBJECTS
+        Detection_Object test_objects(objects);
+        test_objects.print_object();
     }
+    
+    //  send_data(detected_objects);
 }
 
 void send_data(object_type_t &object_data) {
 
   std::shared_ptr<vsomeip::payload> payload = vsomeip::runtime::get() -> create_payload();
+
   std::vector<vsomeip::byte_t> payload_data;
+
 
   payload_data.push_back(object_data.type);
   payload_data.push_back(object_data.count);
   payload_data.push_back(object_data.time);
-
+  
   payload->set_data(payload_data);
+
+
+//    payload->set_data(reinterpret_cast<const vsomeip::byte_t*>(object_data.data()), object_data.size());
+  
   this_app->notify(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, payload);
 }
 
@@ -174,9 +196,28 @@ void offer_client_event()
     std::set<vsomeip::eventgroup_t> its_groups;
     its_groups.insert(EVENT_GROUP_ID);   //  Adding group id
     //  Offer event
-    this_app->offer_event(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, its_groups, vsomeip_v3::event_type_e::ET_EVENT, 
+    this_app->offer_event(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, its_groups, vsomeip_v3::event_type_e::ET_SELECTIVE_EVENT, 
     std::chrono::milliseconds(1000),false,true,nullptr, vsomeip_v3::reliability_type_e::RT_UNKNOWN);
 
     //  LOG MESSAGE
     std::cout << "CLIENT: Object detection events are now ready to be offered.\n";
+}
+
+void on_message_event(const std::shared_ptr<vsomeip::message> &response)
+{
+    std::shared_ptr<vsomeip::payload> payload = response->get_payload();
+    vsomeip::length_t len = payload->get_length();
+
+    //  Payload register
+    std::stringstream string;
+    for(vsomeip::length_t i = 0; i < len; ++i){
+        string << std::setw(2) << std::setfill('0') << std::hex <<
+        (int) (payload->get_data()[i]) << " ";
+    }
+
+    std::cout << "CLIENT : Received message Client/Session ["
+    << std::setw(4) << std::setfill('0') << std::hex
+    << response->get_client() << "/"
+    << response->get_session() << "]"
+    << string.str() << std::endl;
 }
