@@ -3,7 +3,7 @@
     "netmask" : "255.255.255.0",
     "logging" :
     {
-        "level" : "info",
+        "level" : "warning",
         "console" : "true",
         "file" : { "enable" : "true", "path" : "/var/log/vsomeip.log" },
         "dlt" : "true"
@@ -20,12 +20,13 @@
         {
             "service" : "0x1000",
             "instance" : "0x3000",
-            "unreliable" : "30509",
+            "unreliable" : "30500",
             "events" : 
             [
                 {
                 "event" : "0x8778",
-                "is_field" : "false"
+                "is_field" : "false",
+                "update-cycle" : 1000
                 }
             ],
             "eventgroups" : 
