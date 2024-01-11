@@ -230,9 +230,12 @@ void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<obj
         file >> DetectionJson;
 
         if(DetectionJson.find("objects") != DetectionJson.end()){
+
+            object_type_t obj;
+            
             for (const auto& entry : DetectionJson["objects"])
             {
-                object_type_t obj;
+                /*  THE OLD METHOD FOR GETTING OBJECT TYPE
                 //  Get object type
                 if(entry["name"].get<std::string>().compare("vehicle") == 0)
                 {
@@ -253,6 +256,10 @@ void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<obj
                 else{   //  object undefined
                     obj.type = 'u';
                 }
+                */
+
+               //   NEW METHOD FOR GETTING OBJECT TYPE
+               obj.type = entry["name"].get<std::string>();
                 
                 //  Get number of identified object
                 obj.count = entry["number"].get<int>();
@@ -280,13 +287,32 @@ file.close();
 VideoReadWrite::Detection_Object::Detection_Object(object_type_t object): m_object(object)
 {}
 
+VideoReadWrite::Detection_Object::Detection_Object(std::vector<uint8_t> serialized_object) : m_serialized_object(serialized_object)
+{
+    /*  THIS CONSTRUCTOR OVERLOAD IS RESPONSIBLE FOR INTERNAL CONVERSION OF STD::VECTOR<UINT8_T> INTO OBJECT_TYPE_T */
+
+    ObjectDataProto detection_object_proto;
+
+    /*  CONVERSION OF UINT8 VECTOR OBJECT INTO A STRING */
+    std::string ProtoObjString(m_serialized_object.begin(), m_serialized_object.end());
+    
+    /*  PARSING STRING OBJECT INTO PROTO OBJECT */
+    detection_object_proto.ParseFromString(ProtoObjString);
+
+    m_object.type = detection_object_proto.object();    //  Extracting object type from proto field (1)
+    m_object.count = detection_object_proto.count();    //  Extracting count of objects from proto field (2)
+    m_object.time = detection_object_proto.time();    //  Extracting observation time of object from proto field (3)
+}
+
 VideoReadWrite::Detection_Object::~Detection_Object()
 {}
 
 
 void VideoReadWrite::Detection_Object::print_object() const
-{
-    /*  CONSOLE OUTPUT FOR DETECTED OBJECT  */
+{   
+
+    /*  CONSOLE OUTPUT FOR DETECTED OBJECT */
+
     if(m_object.count != 1 && m_object.count > 0)
     {   //  Detected object has multiple instances
         std::cout << m_object.count << " objects of type : " << m_object.type <<
@@ -302,3 +328,31 @@ void VideoReadWrite::Detection_Object::print_object() const
         " is detected at time " << m_object.time << "s.\n";
     }
 }
+
+std::vector<uint8_t> VideoReadWrite::Detection_Object::GetSerializedObjectData()
+{
+    ObjectDataProto serialized_object_proto;
+    std::string serialized_object_string;
+
+    /*  SET SERIALIZATION STRING FIELDS USING PROTO LIBRARY */
+    serialized_object_proto.set_object(m_object.type);  //  Serialize object type field (1)
+    serialized_object_proto.set_count(m_object.count);  //  Serialize object count field (2)
+    serialized_object_proto.set_time(m_object.time);  //  Serialize object time field (3)
+
+    /*  PREPARE SERIALIZED STRING   */
+    serialized_object_proto.SerializeToString(&serialized_object_string);
+
+    /*  PREPARE SERIALIZED VECTOR OBJECT    */
+    std::vector<uint8_t> serialized_object(serialized_object_string.begin(), serialized_object_string.end());
+
+    return serialized_object;
+} 
+
+object_type_t VideoReadWrite::Detection_Object::GetDeserializedObjectData()
+{
+    /*  DESERIALIZATION ALREADY SUCCEEDED IN THE CONSTRUCTOR FUNCTION OVERLOAD, THIS FUNCTION ONLY RETURN MEMBERS   */
+    return m_object;
+}  
+
+
+
