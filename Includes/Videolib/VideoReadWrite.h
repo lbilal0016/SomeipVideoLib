@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include "VideoData.pb.h"
+#include "ObjectData.pb.h"
 
 using VideoCapture = cv::VideoCapture;
 using VideoWriter = cv::VideoWriter;
@@ -25,7 +26,7 @@ struct VideoData
 };
 
 typedef struct object_type{
-    char type;
+    std::string type;
     int count;
     float time;
 }object_type_t;
@@ -52,12 +53,19 @@ class Detection_Object
 public:
 Detection_Object(object_type_t object); //  Constructor
 
+Detection_Object(std::vector<uint8_t> serialized_object); //  Constructor overload function
+
 void print_object() const;  //  Print method for received detected objects
+
+std::vector<uint8_t> GetSerializedObjectData(); //  A method for serializing object_type_t objects into std::vector<uint8>
+
+object_type_t GetDeserializedObjectData();  //  A method for deserializing std::vector<uint8> containers into object_type_t objects
 
 ~Detection_Object();    //  Deconstructor
 
 private:
 object_type_t m_object;
+std::vector<uint8_t> m_serialized_object;
 };
 
 }
