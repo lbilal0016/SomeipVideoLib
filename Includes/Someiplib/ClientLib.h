@@ -21,6 +21,7 @@
 #define EVENT_SERVICE_ID 0x1000
 #define EVENT_INSTANCE_ID 0x3000
 #define EVENT_GROUP_ID 0x4465
+#define EVENT_METHOD_ID 0x0425
 
 //  Comment out the following line if UDP communication is wished
 #define TCP_COMMUNICATION
@@ -31,6 +32,7 @@ using  Detection_Object = VideoReadWrite::Detection_Object;
 
 void run(); //  vsomeip client thread
 void on_message(const std::shared_ptr<vsomeip::message> &response);
+
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available);
 void set_application(std::shared_ptr<vsomeip::application> app);
 
@@ -44,5 +46,8 @@ void ReadConfigFile(const std::string &ConfigFile);
 
 //  This function is called, when client is ready to offer object detection events.
 void offer_client_event();
+
+//  This function is for register_message_handler for event management
+void on_message_event(const std::shared_ptr<vsomeip::message> &response);
 
 #endif

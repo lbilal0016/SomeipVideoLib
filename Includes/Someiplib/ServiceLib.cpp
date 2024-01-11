@@ -111,11 +111,11 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
     static object_type_t detected_object_old;   //  content of previous event message
 
 
-/*  DIDN'T WORK, DATE = 10.01.2024*/
+/*  DIDN'T WORK, DATE = 10.01.2024
     detected_object.type = static_cast<char>((int)*(message_payload->get_data()));
     detected_object.count = (int)*(message_payload->get_data() + 1);
     detected_object.time = static_cast<float>((int)*(message_payload->get_data() + 2));
-
+*/
 
 /*  DIDN'T WORK, DATE = 10.04.2024
     std::vector<int> payload_buffer;
@@ -136,20 +136,30 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
     detected_object.count = (int)detected_object_raw[1];
     detected_object.count = (float)detected_object_raw[2];
 */  
+    /*  SAVING RECEIVED RAW DATA IN A UINT8_T VECTOR    */
+    std::vector<uint8_t> received_object_raw(message_payload->get_data(), message_payload->get_data() + len);
 
+    /*  CREATING A DETECTION OBJECT WITH RAW DATA   */
+    Detection_Object received_object(received_object_raw);
+    
+    /*  DESERIALIZATION OF DETECTION OBJECT RAW DATA    */
+    detected_object = received_object.GetDeserializedObjectData();
+
+    /*  PRINTING RECEIVED OBJECT IF IT IS DIFFERENT THAN PREVIOUS ONE   */
     if( detected_object.type != detected_object_old.type ||
         detected_object.count != detected_object_old.count ||
         detected_object.time != detected_object_old.time)
     {
-    Detection_Object Captured_object(detected_object);
     std::cout << "Content: ";
-    Captured_object.print_object();
-    Captured_object.~Detection_Object();
+    received_object.print_object();
     }
 
+    /*  UNIT-DELAY FOR RECEIVED OBJECT FOR THE NEXT DETECTION   */
     detected_object_old.type = detected_object.type;
     detected_object_old.count = detected_object.count;
     detected_object_old.time = detected_object.time;
+
+    received_object.~Detection_Object();
 }
 
 void run_events()

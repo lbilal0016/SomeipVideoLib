@@ -171,21 +171,32 @@ void run_detection()
 
 void send_data(object_type_t &object_data) {
 
-  std::shared_ptr<vsomeip::payload> payload = vsomeip::runtime::get() -> create_payload();
+    std::shared_ptr<vsomeip::payload> payload = vsomeip::runtime::get() -> create_payload();
 
-  std::vector<vsomeip::byte_t> payload_data;
+    std::vector<vsomeip::byte_t> payload_data;
+
+    Detection_Object object_to_send(object_data);
+    std::vector<uint8_t> payload_vector = object_to_send.GetSerializedObjectData();
+    
+    /*
+    payload_data.push_back(object_data.type);
+    payload_data.push_back(object_data.count);
+    payload_data.push_back(object_data.time);
+    */
+
+    for(const auto &payload_element : payload_vector)
+    {
+        payload_data.push_back(payload_element);
+    }
+    
+
+    payload->set_data(payload_data);
 
 
-  payload_data.push_back(object_data.type);
-  payload_data.push_back(object_data.count);
-  payload_data.push_back(object_data.time);
-  
-  payload->set_data(payload_data);
-
-
-//    payload->set_data(reinterpret_cast<const vsomeip::byte_t*>(object_data.data()), object_data.size());
-  
-  this_app->notify(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, payload);
+    //    payload->set_data(reinterpret_cast<const vsomeip::byte_t*>(object_data.data()), object_data.size());
+    
+    this_app->notify(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, payload);
+    object_to_send.~Detection_Object();
 }
 
 void offer_client_event()
