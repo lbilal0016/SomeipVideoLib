@@ -27,13 +27,13 @@ include_directories (
 )
 
 #   Compile service
-add_executable(service ./service.cpp Includes/Someiplib/ServiceLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc)
+add_executable(service ./service.cpp Includes/Someiplib/ServiceLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc Includes/Videolib/ObjectData.pb.cc)
 target_link_libraries(service vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf)
 
 #   Compile client
-add_executable(Client ./Client.cpp Includes/Someiplib/ClientLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc)
+add_executable(Client ./Client.cpp Includes/Someiplib/ClientLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc Includes/Videolib/ObjectData.pb.cc)
 target_link_libraries(Client vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf) 
 
 #   Compile test
-#add_executable(Test ./testFunctionalities.cpp Includes/Someiplib/ServiceLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc)
+#add_executable(Test ./testFunctionalities.cpp Includes/Someiplib/ServiceLib.cpp Includes/Videolib/VideoReadWrite.cpp Includes/Videolib/VideoData.pb.cc Includes/Videolib/ObjectData.pb.cc)
 #target_link_libraries(Test vsomeip3 ${Boost_LIBRARIES} ${OpenCV_LIBS} nlohmann_json protobuf)
