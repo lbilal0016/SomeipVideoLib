@@ -1,0 +1,24 @@
+ubuntu1@ubuntu1-VirtualBox:~/SomeipLibProject$ ./configure_and_run_server.sh 
+/home/ubuntu1/SomeipLibProject/TCP/server
+Configuration for video input/output has been successfully defined.
+SERVER: run_events() is currently being hold.
+SERVICE: Service[1777.5677] is available.
+SERVICE: Condition lock will now be removed, since Service[1777.5677] is available now.
+SERVER: run_events() is now released.
+2024-01-11 16:22:10.351501 [warning] sd::get_eventgroup_reliability: couldn't determine eventgroup reliability type for [1000.3000.4465] using reliability type:  0002
+SERVICE: Service[1000.3000] is available.
+SERVICE: Condition lock will now be removed, since Service[1000.3000] is available now.
+on_message():
+SERVICE: Received request with Client/Session [ 2222/0001]00 01 02 03 04 05 06 07 08 09 
+Server: Input file is being read ... 
+Video file opened successfully and is currently being read ...
+2024-01-11 16:22:10.408326 [warning] BLOCKING CALL MESSAGE(1111): [1777.5677.0421:0001]
+2024-01-11 16:22:12.800963 [warning] Didn't receive a multicast SD message for 2200ms.
+Input video file is being successfully read.
+Video file is serialised and ready to be sent.
+SERVICE: A notification for event [1000.3000.8778] to ClientID/Session [0000.0002] = (16) 0a 07 76 65 68 69 63 6c 65 10 01 1d cd cc 4c 3e 
+Content: An object of type : vehicle is detected at time 0.2s.
+SERVICE: A notification for event [1000.3000.8778] to ClientID/Session [0000.0003] = (14) 0a 05 68 75 6d 61 6e 10 03 1d cd cc 8c 3f 
+Content: 3 objects of type : human are detected at time 1.1s.
+SERVICE: A notification for event [1000.3000.8778] to ClientID/Session [0000.0004] = (16) 0a 07 75 6e 69 63 6f 72 6e 10 01 1d cd cc 4c 3f 
+Content: An object of type : unicorn is detected at time 0.8s.
