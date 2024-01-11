@@ -161,9 +161,6 @@ void run_detection()
     {
         std::cout << "CLIENT: Sending data ... \n";
         send_data(objects);
-        //  TEST OF SENDING DETECTED OBJECTS
-        Detection_Object test_objects(objects);
-        test_objects.print_object();
     }
     
     //  send_data(detected_objects);
@@ -175,7 +172,12 @@ void send_data(object_type_t &object_data) {
 
     std::vector<vsomeip::byte_t> payload_data;
 
+    /*  CONSTRUCTING THE OBJECT TO BE SENT  */
     Detection_Object object_to_send(object_data);
+
+    //  TEST OF SENDING DETECTED OBJECTS
+    object_to_send.print_object();
+
     std::vector<uint8_t> payload_vector = object_to_send.GetSerializedObjectData();
     
     /*
