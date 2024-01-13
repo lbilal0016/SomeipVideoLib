@@ -13,6 +13,20 @@
 std::mutex mutex;
 std::condition_variable condition;
 
+//  Executes print operations with a client tag
+void service_printer(const std::stringstream &print_message)
+{
+    std::cout << "SERVICE : " <<
+    print_message.str() << std::endl;
+}
+
+//  Executes print operations with a client tag
+void service_printer(const std::string &print_message)
+{
+    std::cout << "SERVICE : " <<
+    print_message << std::endl;
+}
+
 //  This function passes the someip application object from the Client executable to this object code
 static std::shared_ptr<vsomeip::application> this_app;
 void set_application(std::shared_ptr<vsomeip::application> app)
@@ -22,7 +36,7 @@ void set_application(std::shared_ptr<vsomeip::application> app)
 
 void on_message(const std::shared_ptr<vsomeip::message>& Request)
 {
-    std::cout << "on_message():\n";
+    service_printer("on_message():");
     //  Reading the payload
     std::shared_ptr<vsomeip::payload> response_payload = Request->get_payload();
     //  Getting the payload length
@@ -30,6 +44,7 @@ void on_message(const std::shared_ptr<vsomeip::message>& Request)
 
     //  Getting the payload
     std::stringstream ss;
+    std::stringstream print_stream;
     //  This initiates a loop that iterates over each byte of the payload.
     for(vsomeip::length_t i=0; i<len; ++i)
     {
@@ -40,14 +55,15 @@ void on_message(const std::shared_ptr<vsomeip::message>& Request)
     }
 
     /*  ACKNOWLEDGE THE VIDEO REQUEST FROM THE CLIENT SIDE  */
-    std::cout << "SERVICE: Received request with Client/Session [ "
+    print_stream << "Received request with Client/Session [ "
     << std::setw(4) << std::setfill('0') << std::hex << Request->get_client() << "/"
     << std::setw(4) << std::setfill('0') << std::hex << Request->get_session() << "]"
-    << ss.str() << std::endl;
+    << ss.str();
+    service_printer(print_stream);
 
     /*      READ THE INPUT FROM CONFIG AND PUT IT ON PAYLOAD    */
     //  Reading the input video file
-    std::cout << "Server: Input file is being read ... \n"; //  log message
+    service_printer("Input file is being read ...");    //  log message
     VideoData Payload_Video;    //  Create the container for video data 
     VideoRead(Payload_Video);   //  Read the input into this container for video data
 
@@ -66,14 +82,18 @@ void on_message(const std::shared_ptr<vsomeip::message>& Request)
 
 void on_availability_event(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
 {
-    std::cout << "SERVICE: Service[" << std::setw(4) << std::setfill('0') << std::hex << 
-    Service << "." << Instance << "] is " << (is_available ? "available." : "Not available.") << std::endl;
+    std::stringstream print_stream;
+    print_stream << "Service[" << std::setw(4) << std::setfill('0') << std::hex << 
+    Service << "." << Instance << "] is " << (is_available ? "available." : "Not available.");
+    service_printer(print_stream);
+    print_stream.str("");   
 
     if(is_available)
     {
     //  Sending wake-up call for the waiting thread on the service side after the detection event becomes available on the client side
-    std::cout << "SERVICE: Condition lock will now be removed, since Service[" << std::setw(4) << std::setfill('0') 
-    << Service << "." << Instance << "] is available now." << std::endl;
+    print_stream << "Condition lock will now be removed, since Service[" << std::setw(4) << std::setfill('0') 
+    << Service << "." << Instance << "] is available now.";
+    service_printer(print_stream);
     
     condition.notify_one();
     }
@@ -84,6 +104,7 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
     /*  ACKNOWLEDGE EVENT_MESSAGE */
 
    std::stringstream message;
+   std::stringstream print_stream;
 
    message << "SERVICE: A notification for event [" << 
    std::setw(4) << std::setfill('0') << std::hex <<
@@ -105,37 +126,12 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
         message << std::hex << std::setw(2) << std::setfill('0')
         << (int) message_payload->get_data()[i] << " ";
     }
-    std::cout << message.str() << std::endl;
+    print_stream << message.str();
+    service_printer(print_stream);
 
     static object_type_t detected_object;  //  content of current event message
     static object_type_t detected_object_old;   //  content of previous event message
-
-
-/*  DIDN'T WORK, DATE = 10.01.2024
-    detected_object.type = static_cast<char>((int)*(message_payload->get_data()));
-    detected_object.count = (int)*(message_payload->get_data() + 1);
-    detected_object.time = static_cast<float>((int)*(message_payload->get_data() + 2));
-*/
-
-/*  DIDN'T WORK, DATE = 10.04.2024
-    std::vector<int> payload_buffer;
-    for(int i = 0; i < message_payload->get_length();++i)
-    {
-        payload_buffer.push_back((int) (message_payload->get_data()[i]));
-    }
-
-    detected_object.type = (payload_buffer[0]);
-    detected_object.count = payload_buffer[1];
-    detected_object.type = (payload_buffer[2]);
-*/
-
-/*  DIDN'T WORK, DATE = 10-01-2024
-    std::vector<vsomeip::byte_t> detected_object_raw(message_payload->get_data(), message_payload->get_data() + message_payload->get_length());
-
-    detected_object.type = (char)detected_object_raw[0];
-    detected_object.count = (int)detected_object_raw[1];
-    detected_object.count = (float)detected_object_raw[2];
-*/  
+ 
     /*  SAVING RECEIVED RAW DATA IN A UINT8_T VECTOR    */
     std::vector<uint8_t> received_object_raw(message_payload->get_data(), message_payload->get_data() + len);
 
@@ -159,15 +155,15 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
     detected_object_old.count = detected_object.count;
     detected_object_old.time = detected_object.time;
 
-    received_object.~Detection_Object();
+    //received_object.~Detection_Object();
 }
 
 void run_events()
 {
-    std::cout << "SERVER: run_events() is currently being hold.\n";
+    service_printer("run_events() is currently being hold.");
     std::unique_lock<std::mutex> lock_events(mutex);
     condition.wait(lock_events);
-    std::cout << "SERVER: run_events() is now released.\n";
+    service_printer("run_events() is now released.");
 
     std::set<vsomeip::eventgroup_t> event_groups;
     event_groups.insert(EVENT_GROUP_ID);
