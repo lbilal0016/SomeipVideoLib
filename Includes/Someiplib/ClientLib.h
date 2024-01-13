@@ -30,6 +30,11 @@ static std::string CONFIGURATION_VIDEO_DETECTION;
 
 using  Detection_Object = VideoReadWrite::Detection_Object;
 
+//  Executes print operations with a client tag
+void client_printer(const std::stringstream &print_message);
+//  Function overload for previous function with std::string type
+void client_printer(const std::string &print_message);
+
 void run(); //  vsomeip client thread
 void on_message(const std::shared_ptr<vsomeip::message> &response);
 
