@@ -34,6 +34,7 @@ void VideoRead(VideoData &InputVideoData)
             InputVideoData.frameSizeCaptured = true;    //  First video frame size is captured
         }
     }
+
     //  Log message 
     std::cout << "Input video file is being successfully read.\n";
 }
@@ -138,11 +139,6 @@ std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata)
         }
     }
 
-    //  Encoding the single frame attribute to JPEG format and filling it into ProtovideoSent object
-/*     std::vector<uchar> SingleFrameBuf;
-    cv::imencode(".jpg", videodata.SingleFrame, SingleFrameBuf);
-    ProtovideoSent.set_single_frame(reinterpret_cast<const char *>(SingleFrameBuf.data()), SingleFrameBuf.size()); */
-
     //  Filling simple fields in ProtovideoSent object
     ProtovideoSent.set_width(videodata.frameSize.width);    //  setting width
     ProtovideoSent.set_height(videodata.frameSize.height);  //  setting height
@@ -182,11 +178,6 @@ VideoData DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector)
         cv::Mat frame = cv::imdecode(buf, cv::IMREAD_COLOR);
         receivedVideo.VideoFrames.push_back(frame);
     }
-
-    //  Decode and fill SingleFrame attribute
-/*     const std::string &singleFrameRec = ProtoVideoRec.single_frame();
-    std::vector<uchar> single_frame_buf(singleFrameRec.begin(), singleFrameRec.end());
-    receivedVideo.SingleFrame = cv::imdecode(single_frame_buf, cv::IMREAD_COLOR); */
 
     //  Filling simple attributes
     receivedVideo.frameSize = cv::Size(ProtoVideoRec.width(), ProtoVideoRec.height());
@@ -229,36 +220,14 @@ void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<obj
         json DetectionJson;
         file >> DetectionJson;
 
+        //  Scan the json file from the beginning until the end
         if(DetectionJson.find("objects") != DetectionJson.end()){
 
             object_type_t obj;
             
             for (const auto& entry : DetectionJson["objects"])
             {
-                /*  THE OLD METHOD FOR GETTING OBJECT TYPE
-                //  Get object type
-                if(entry["name"].get<std::string>().compare("vehicle") == 0)
-                {
-                    obj.type = 'v';
-                }
-                else if(entry["name"].get<std::string>().compare("human") == 0)
-                {
-                    obj.type = 'h';
-                }
-                else if(entry["name"].get<std::string>().compare("animal") == 0)
-                {
-                    obj.type = 'a';
-                }                
-                else if(entry["name"].get<std::string>().compare("sidewalk") == 0)
-                {
-                    obj.type = 's';
-                }
-                else{   //  object undefined
-                    obj.type = 'u';
-                }
-                */
-
-               //   NEW METHOD FOR GETTING OBJECT TYPE
+               //  GETTING OBJECT TYPE
                obj.type = entry["name"].get<std::string>();
                 
                 //  Get number of identified object
@@ -284,9 +253,11 @@ void DetectObjectsFromJson(const std::string& JsonPathDetection, std::vector<obj
 file.close();
 }
 
+//  Constructor of object detection class by using directly object_type_t 
 VideoReadWrite::Detection_Object::Detection_Object(object_type_t object): m_object(object)
 {}
 
+//  Constructor overlaod of object detection class by using serialized object type
 VideoReadWrite::Detection_Object::Detection_Object(std::vector<uint8_t> serialized_object) : m_serialized_object(serialized_object)
 {
     /*  THIS CONSTRUCTOR OVERLOAD IS RESPONSIBLE FOR INTERNAL CONVERSION OF STD::VECTOR<UINT8_T> INTO OBJECT_TYPE_T */
@@ -307,7 +278,7 @@ VideoReadWrite::Detection_Object::Detection_Object(std::vector<uint8_t> serializ
 VideoReadWrite::Detection_Object::~Detection_Object()
 {}
 
-
+//  This method is used to print detected objects
 void VideoReadWrite::Detection_Object::print_object() const
 {   
 
@@ -320,7 +291,7 @@ void VideoReadWrite::Detection_Object::print_object() const
     }
     else if(m_object.count == 0)
     {   //  There is a problem with the detection, so that an object has been detected with count = 0
-        std::cout << "Error at detection, an object with no count was identified!\n";
+        std::cout << "Error at detection, an object with no number was identified!\n";
     }
     else
     {   //  A single object was detected
