@@ -39,11 +39,9 @@ void set_application(std::shared_ptr<vsomeip::application> app)
 void run()
 {
     client_printer("run() : ");
-    //  std::cout << "CLIENT: run() : \n";
     std::unique_lock<std::mutex> lock(mutex);
     condition.wait(lock);
     client_printer("lock is removed.");
-    //std::cout << "CLIENT: lock is removed\n";
 
     //  Creating the object for vsome request message
     std::shared_ptr<vsomeip::message> request;
@@ -83,7 +81,6 @@ void run()
 void on_message(const std::shared_ptr<vsomeip::message> &response)
 {
 client_printer("on_message() : ");
-//std::cout << "CLIENT: on_message() : \n";
 std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();    //  Read the someip message payload to the its_payload variable
 vsomeip::length_t len = its_payload->get_length();  //  extracting the length of the payload
 
@@ -91,7 +88,7 @@ std::vector<uint8_t> received_video_raw(its_payload->get_data(), its_payload->ge
 
 //  Print the received data
 std::stringstream print_stream;
-print_stream << "CLIENT: Received message with Client/Session ["
+print_stream << "Received message with Client/Session ["
 <<  std::setw(4) << std::setfill('0') << std::hex
 <<  response->get_client() << "/"
 <<  std::setw(4) << std::setfill('0') << std::hex
@@ -116,12 +113,11 @@ condition_detection.notify_one();
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
 {
     client_printer("on_availability() : ");
-    //std::cout << "CLIENT: on_availability() : \n";
 
 //  Checking the availability of the service offered by the server
 
 std::stringstream print_stream;
-print_stream << "CLIENT: Service (Service.Instance) [" << std::setw(4) << std::setfill('0') << std::hex 
+print_stream << "Service (Service.Instance) [" << std::setw(4) << std::setfill('0') << std::hex 
 << Service << "." << Instance << "] is " << (is_available ? "available" : "NOT available") << std::endl;
 
 client_printer(print_stream);
@@ -129,7 +125,6 @@ client_printer(print_stream);
 if(is_available){
 //  Sending wake-up call for the waiting thread on the client side after the service is available
 client_printer("on_availability : service is available, condition lock will now be removed.");
-//std::cout << "on_availability : service is available, condition lock will now be removed.\n";
 condition.notify_one();
 }
 }
@@ -139,7 +134,6 @@ void SomeIpLib::ReadConfigFile(const std::string &ConfigFile)
 {
     CONFIGURATION_VIDEO_DETECTION = ConfigFile;
     client_printer("Video configuration for someip library has been successfully defined.");
-    //std::cout << "CLIENT: Video configuration for someip library has been successfully defined.\n";
 }
 
 void run_detection()
@@ -149,8 +143,6 @@ void run_detection()
     
     //  lock for the object detection is removed
     client_printer("Object detection is running ...");
-    //std::cout << "CLIENT : Object detection is running ...\n";
-
 
     /*  FURTHER STEPS: 
 
@@ -176,11 +168,8 @@ void run_detection()
     for (auto& objects : detected_objects)
     {
         client_printer("Sending data ...");
-        //std::cout << "CLIENT: Sending data ... \n";
         send_data(objects);
     }
-    
-    //  send_data(detected_objects);
 }
 
 void send_data(object_type_t &object_data) {
@@ -223,7 +212,6 @@ void offer_client_event()
 
     //  LOG MESSAGE
     client_printer("Object detection events are now ready to be offered.");
-    //std::cout << "CLIENT: Object detection events are now ready to be offered.\n";
 }
 
 void on_message_event(const std::shared_ptr<vsomeip::message> &response)
@@ -239,7 +227,7 @@ void on_message_event(const std::shared_ptr<vsomeip::message> &response)
         (int) (payload->get_data()[i]) << " ";
     }
 
-    print_string << "CLIENT : Received message Client/Session ["
+    print_string << "Received message Client/Session ["
     << std::setw(4) << std::setfill('0') << std::hex
     << response->get_client() << "/"
     << response->get_session() << "]"
