@@ -68,7 +68,44 @@ object_type_t m_object;
 std::vector<uint8_t> m_serialized_object;
 };
 
+
+class Video_Object
+{
+    public:
+
+    Video_Object(std::string config_io, std::string host_info);    //  constructor
+
+    //  Reads the video capture object in the first argument into the second argument struct
+    void VideoRead();
+    
+    //  Writes the second argument of video data struct into the first argument of videowriter object
+    void VideoWrite();
+
+    //  This function serialises VideoData struct to an std::vector<uint8_t> and returns that object
+    std::vector<uint8_t> SerialiseVideoData();
+
+    //  This function deserialises an std::vector<uint8_t> which carries a VideoData struct, and returns this VideoData struct
+    void DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector);
+
+    ~Video_Object();    //  deconstructor
+
+    private:
+
+    std::string m_video_config_io;
+    std::string m_host_info;
+    VideoData m_video_data;
+
+    //  Configures Input/Output files via json configuration file and returns the directory for input/output files
+    std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile);
+
+    //  Executes print operations with a client tag
+    void info_printer(const std::stringstream &print_message);
+    //  Function overload for previous function with std::string type
+    void info_printer(const std::string &print_message);
+};
+
 }
+
 
 //  This function serialises VideoData struct to an std::vector<uint8_t> and returns that object
 std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata);

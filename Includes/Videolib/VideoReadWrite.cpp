@@ -325,5 +325,200 @@ object_type_t VideoReadWrite::Detection_Object::GetDeserializedObjectData()
     return m_object;
 }  
 
+//  Constructor of video object 
+VideoReadWrite::Video_Object::Video_Object(std::string config_io, std::string host_info): m_video_config_io(config_io), m_host_info(host_info)
+{}
 
+//  Deconstructor of video object
+VideoReadWrite::Video_Object::~Video_Object()
+{}
 
+std::string VideoReadWrite::Video_Object::ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile)
+{      
+    std::string Result;
+    //  Configure input
+    if(typeInputOutput.compare("Input") == 0)
+    {
+        json inputConfig;
+        std::ifstream inputConfigFile(ConfigFile);
+        if(!inputConfigFile.is_open())
+        {
+            std::cerr << "Error: Failed to open input configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+            throw std::runtime_error("Error: Configuration file could not be opened.\n");
+        }
+        inputConfigFile >> inputConfig;
+        inputConfigFile.close();
+
+        Result = inputConfig["InputFile"];
+    }
+    //  Configure Output   
+    else if(typeInputOutput.compare("Output") == 0){
+        json outputConfig;
+        std::ifstream outputConfigFile(ConfigFile);
+        if(!outputConfigFile.is_open())
+        {
+            std::cerr << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+            throw std::runtime_error("Error: Configuration file could not be opened.\n");
+        }
+        outputConfigFile >> outputConfig;
+        outputConfigFile.close();
+
+        Result = outputConfig["OutputFile"];
+    }
+    //  Configure Detection Json file  
+    else if(typeInputOutput.compare("Detection") == 0){
+        json detectionConfig;
+        std::ifstream detectionConfigFile(ConfigFile);
+        if(!detectionConfigFile.is_open())
+        {
+            std::cerr << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+            throw std::runtime_error("Error: Configuration file could not be opened.\n");
+        }
+        detectionConfigFile >> detectionConfig;
+        detectionConfigFile.close();
+
+        Result = detectionConfig["Detection"];
+    }
+    //  False argument to the function
+    else{
+        std::cerr << "Error: Input argument to the function ConfigureInputOutput is not correct. Correct usage is Input, Output, or Detection.\n";
+        throw std::runtime_error("Error: Wrong argument to functon ConfigureInputOutput.\n");
+    }
+
+    return Result;
+}
+
+void VideoReadWrite::Video_Object::VideoRead()
+{
+    VideoCapture VideoCap(ConfigureInputOutput("Input", CONFIGURATION_VIDEO_IO));
+
+    //  Checking against opening the file
+    if(!VideoCap.isOpened()){
+        std::cerr << m_host_info << std::endl
+        <<"Error: Video file could not be opened.\n";
+        throw std::runtime_error("Error: Video file read is not successful.\n");
+    }   else{
+        //  Log message
+        info_printer("Video file opened successfully and is currently being read ...");
+
+    //  Reading the FPS Rate into the FPS_Rate attribute
+    m_video_data.FPS_Rate = VideoCap.get(cv::CAP_PROP_FPS);
+
+    m_video_data.frameSizeCaptured = false;   //  This flag will be set to 1 once the first frame size is captured
+    while(VideoCap.read(m_video_data.SingleFrame)){
+        if(!m_video_data.SingleFrame.empty()){ // Add the frame to Frames vector only if it is not empty
+        m_video_data.VideoFrames.push_back(m_video_data.SingleFrame.clone());
+        }
+        //  Saving the frame size for once
+        if(!m_video_data.frameSizeCaptured){
+            m_video_data.frameSize = m_video_data.SingleFrame.size();
+            m_video_data.frameSizeCaptured = true;    //  First video frame size is captured
+        }
+    }
+
+    //  Log message 
+    info_printer("Input video file is being successfully read.");
+}
+}
+
+void VideoReadWrite::Video_Object::VideoWrite()
+{
+    //  1.  Creating the cv::VideoWriter object
+    VideoWriter VideoWriter(ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO), VideoWriter::fourcc('X','2','6','4'),m_video_data.FPS_Rate, m_video_data.frameSize);
+
+    //  Checking against the createability of output file
+    if(!VideoWriter.isOpened()){
+        std::cerr << m_host_info << std::endl
+        <<"Error: Creating an output video file is not successful.\n";
+        throw std::runtime_error("Error: Video file write is not successful.\n");
+    }//else{std::cout << "Creating the output video file is successful.\n";}
+
+    //  Writing the output file
+    info_printer("Writing the output ...");
+    for(const cv::Mat &frame : m_video_data.VideoFrames){
+        VideoWriter.write(frame);
+    }
+
+    //  Log message
+    std::stringstream print_stream;
+    print_stream << "Output file is written in the following directory: "
+    << std::endl << ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO);
+
+    info_printer(print_stream);
+}
+
+//  This function serialises VideoData struct to an std::vector<uint8_t> and returns that object
+std::vector<uint8_t> VideoReadWrite::Video_Object::SerialiseVideoData()
+{
+    //  Filling videodata struct into the Protovideo object
+    VideoDataProto ProtovideoSent;
+
+    //  Filling video frames field in proto object
+    for(const auto &frame : m_video_data.VideoFrames)
+    {
+        std::vector<uchar> frame_buffer;
+        if(!frame.empty()){ //  Checking against empty frames
+        cv::imencode(".jpg", frame, frame_buffer);   //  Encoding current frame to JPEG format
+        ProtovideoSent.add_video_frames(reinterpret_cast<const char *>(frame_buffer.data()), frame_buffer.size());    //  Add encoded frame to proto's repeated bytes field
+        }
+    }
+
+    //  Filling simple fields in ProtovideoSent object
+    ProtovideoSent.set_width(m_video_data.frameSize.width);    //  setting width
+    ProtovideoSent.set_height(m_video_data.frameSize.height);  //  setting height
+    ProtovideoSent.set_fps_rate(m_video_data.FPS_Rate);    //  setting fps rate
+    ProtovideoSent.set_frame_size_captured(m_video_data.frameSizeCaptured);    //  settig the flag for frame size captured
+
+    //  Create and prepare the return object
+    std::string serialized_video_string;
+    ProtovideoSent.SerializeToString(&serialized_video_string);
+    std::vector<uint8_t> serialized_video_vector(serialized_video_string.begin(),serialized_video_string.end());
+
+    //  Log message
+    info_printer("Video file is serialised and ready to be sent.");
+
+    return serialized_video_vector;
+}
+
+//  This function deserialises an std::vector<uint8_t> which carries a VideoData struct, and returns this VideoData struct
+void VideoReadWrite::Video_Object::DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector)
+{
+    VideoDataProto ProtoVideoRec;  
+
+    //  Log message
+    info_printer("Converting raw video data into readable video ...");
+
+    //  Reading (parsing) the input string into ProtoVideoRec object
+    std::string protoString(raw_video_vector.begin(),raw_video_vector.end());
+    ProtoVideoRec.ParseFromString(protoString);
+
+    //  Fill the receivedVideo struct here:
+
+    //  Filling the VideoFrames vector
+    for(const auto &frames : ProtoVideoRec.video_frames())
+    {
+        std::vector<uchar> frame_buffer(frames.begin(), frames.end());
+        cv::Mat frame = cv::imdecode(frame_buffer, cv::IMREAD_COLOR);
+        m_video_data.VideoFrames.push_back(frame);
+    }
+
+    //  Filling simple attributes
+    m_video_data.frameSize = cv::Size(ProtoVideoRec.width(), ProtoVideoRec.height());
+    m_video_data.FPS_Rate = ProtoVideoRec.fps_rate();
+    m_video_data.frameSizeCaptured = ProtoVideoRec.frame_size_captured();
+
+    //  Log message
+    info_printer("Received raw video is now converted into an opencv object, and is ready to be written.");
+}
+
+void VideoReadWrite::Video_Object::info_printer(const std::stringstream &print_message)
+{
+    std::cout << m_host_info <<
+    print_message.str() << std::endl;
+}
+
+void VideoReadWrite::Video_Object::info_printer(const std::string &print_message)
+{
+    std::cout << m_host_info <<
+    print_message << std::endl;
+}
