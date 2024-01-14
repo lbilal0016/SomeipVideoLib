@@ -35,6 +35,13 @@ void set_application(std::shared_ptr<vsomeip::application> app)
     this_app = app;
 }
 
+//  This function passes the video object from client source to the object code
+static Video_Object Video_Obj;
+void set_video_object(Video_Object &video_obj)
+{
+    Video_Obj = video_obj;
+}
+
 //  This function will be run on the client side after the service is offered
 void run()
 {

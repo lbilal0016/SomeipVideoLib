@@ -29,6 +29,7 @@
 static std::string CONFIGURATION_VIDEO_DETECTION;
 
 using  Detection_Object = VideoReadWrite::Detection_Object;
+using Video_Object = VideoReadWrite::Video_Object;
 
 //  Executes print operations with a client tag
 void client_printer(const std::stringstream &print_message);
@@ -39,7 +40,9 @@ void run(); //  vsomeip client thread
 void on_message(const std::shared_ptr<vsomeip::message> &response);
 
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available);
+
 void set_application(std::shared_ptr<vsomeip::application> app);
+void set_video_object(Video_Object &video_obj);
 
 void run_detection();   //  function for object detection thread
 void send_data(object_type_t &object_data);
