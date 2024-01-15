@@ -51,9 +51,9 @@ void ReadConfigFile(const std::string &ConfigFile);
 class Detection_Object
 {
 public:
-Detection_Object(object_type_t object); //  Constructor
+Detection_Object(object_type_t object, std::string host_info); //  Constructor
 
-Detection_Object(std::vector<uint8_t> serialized_object); //  Constructor overload function
+Detection_Object(std::vector<uint8_t> serialized_object, std::string host_info); //  Constructor overload function
 
 void print_object() const;  //  Print method for received detected objects
 
@@ -66,14 +66,18 @@ object_type_t GetDeserializedObjectData();  //  A method for deserializing std::
 private:
 object_type_t m_object;
 std::vector<uint8_t> m_serialized_object;
+std::string m_host_info;
 };
 
 
 class Video_Object
 {
     public:
-
+    Video_Object(); //  Constructor for initiating an empty Video_Object
     Video_Object(std::string config_io, std::string host_info);    //  constructor
+
+    //  Function added for compatibility : it allows redefining video io directory
+    void RedefineDirectory(std::string config_io);
 
     //  Reads the video capture object in the first argument into the second argument struct
     void VideoRead();
@@ -87,6 +91,7 @@ class Video_Object
     //  This function deserialises an std::vector<uint8_t> which carries a VideoData struct, and returns this VideoData struct
     void DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector);
 
+    Video_Object &operator=(const Video_Object &other_video_object);
     ~Video_Object();    //  deconstructor
 
     private:
@@ -95,8 +100,8 @@ class Video_Object
     std::string m_host_info;
     VideoData m_video_data;
 
-    //  Configures Input/Output files via json configuration file and returns the directory for input/output files
-    std::string ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile);
+    //  Configure the json file for reading the directory information
+    std::string ConfigureInputOutput(const std::string &typeInputOutput);
 
     //  Executes print operations with a client tag
     void info_printer(const std::stringstream &print_message);
@@ -104,8 +109,8 @@ class Video_Object
     void info_printer(const std::string &print_message);
 };
 
-}
-
+//  Namespace VideoReadWrite end
+}   
 
 //  This function serialises VideoData struct to an std::vector<uint8_t> and returns that object
 std::vector<uint8_t> SerialiseVideoData(const VideoData &videodata);

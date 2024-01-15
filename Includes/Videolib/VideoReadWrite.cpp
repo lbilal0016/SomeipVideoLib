@@ -254,11 +254,11 @@ file.close();
 }
 
 //  Constructor of object detection class by using directly object_type_t 
-VideoReadWrite::Detection_Object::Detection_Object(object_type_t object): m_object(object)
+VideoReadWrite::Detection_Object::Detection_Object(object_type_t object, std::string host_info): m_object(object), m_host_info(host_info)
 {}
 
 //  Constructor overlaod of object detection class by using serialized object type
-VideoReadWrite::Detection_Object::Detection_Object(std::vector<uint8_t> serialized_object) : m_serialized_object(serialized_object)
+VideoReadWrite::Detection_Object::Detection_Object(std::vector<uint8_t> serialized_object, std::string host_info) : m_serialized_object(serialized_object), m_host_info(host_info)
 {
     /*  THIS CONSTRUCTOR OVERLOAD IS RESPONSIBLE FOR INTERNAL CONVERSION OF STD::VECTOR<UINT8_T> INTO OBJECT_TYPE_T */
 
@@ -286,16 +286,19 @@ void VideoReadWrite::Detection_Object::print_object() const
 
     if(m_object.count != 1 && m_object.count > 0)
     {   //  Detected object has multiple instances
-        std::cout << m_object.count << " objects of type : " << m_object.type <<
+        std::cout << m_host_info << " : "
+        << m_object.count << " objects of type : " << m_object.type <<
         " are detected at time " << m_object.time << "s.\n";
     }
     else if(m_object.count == 0)
     {   //  There is a problem with the detection, so that an object has been detected with count = 0
-        std::cout << "Error at detection, an object with no number was identified!\n";
+        std::cout << m_host_info << " : "
+        << "Error at detection, an object with no instance was identified!\n";
     }
     else
     {   //  A single object was detected
-        std::cout << "An object of type : " << m_object.type <<
+        std::cout << m_host_info << " : "
+        << "An object of type : " << m_object.type <<
         " is detected at time " << m_object.time << "s.\n";
     }
 }
@@ -329,68 +332,17 @@ object_type_t VideoReadWrite::Detection_Object::GetDeserializedObjectData()
 VideoReadWrite::Video_Object::Video_Object(std::string config_io, std::string host_info): m_video_config_io(config_io), m_host_info(host_info)
 {}
 
+//  Constructor overload of video object 
+VideoReadWrite::Video_Object::Video_Object()
+{}
+
 //  Deconstructor of video object
 VideoReadWrite::Video_Object::~Video_Object()
 {}
 
-std::string VideoReadWrite::Video_Object::ConfigureInputOutput(const std::string &typeInputOutput, std::string &ConfigFile)
-{      
-    std::string Result;
-    //  Configure input
-    if(typeInputOutput.compare("Input") == 0)
-    {
-        json inputConfig;
-        std::ifstream inputConfigFile(ConfigFile);
-        if(!inputConfigFile.is_open())
-        {
-            std::cerr << "Error: Failed to open input configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
-            throw std::runtime_error("Error: Configuration file could not be opened.\n");
-        }
-        inputConfigFile >> inputConfig;
-        inputConfigFile.close();
-
-        Result = inputConfig["InputFile"];
-    }
-    //  Configure Output   
-    else if(typeInputOutput.compare("Output") == 0){
-        json outputConfig;
-        std::ifstream outputConfigFile(ConfigFile);
-        if(!outputConfigFile.is_open())
-        {
-            std::cerr << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
-            throw std::runtime_error("Error: Configuration file could not be opened.\n");
-        }
-        outputConfigFile >> outputConfig;
-        outputConfigFile.close();
-
-        Result = outputConfig["OutputFile"];
-    }
-    //  Configure Detection Json file  
-    else if(typeInputOutput.compare("Detection") == 0){
-        json detectionConfig;
-        std::ifstream detectionConfigFile(ConfigFile);
-        if(!detectionConfigFile.is_open())
-        {
-            std::cerr << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
-            throw std::runtime_error("Error: Configuration file could not be opened.\n");
-        }
-        detectionConfigFile >> detectionConfig;
-        detectionConfigFile.close();
-
-        Result = detectionConfig["Detection"];
-    }
-    //  False argument to the function
-    else{
-        std::cerr << "Error: Input argument to the function ConfigureInputOutput is not correct. Correct usage is Input, Output, or Detection.\n";
-        throw std::runtime_error("Error: Wrong argument to functon ConfigureInputOutput.\n");
-    }
-
-    return Result;
-}
-
 void VideoReadWrite::Video_Object::VideoRead()
 {
-    VideoCapture VideoCap(ConfigureInputOutput("Input", CONFIGURATION_VIDEO_IO));
+    VideoCapture VideoCap(ConfigureInputOutput("Input"));
 
     //  Checking against opening the file
     if(!VideoCap.isOpened()){
@@ -424,7 +376,7 @@ void VideoReadWrite::Video_Object::VideoRead()
 void VideoReadWrite::Video_Object::VideoWrite()
 {
     //  1.  Creating the cv::VideoWriter object
-    VideoWriter VideoWriter(ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO), VideoWriter::fourcc('X','2','6','4'),m_video_data.FPS_Rate, m_video_data.frameSize);
+    VideoWriter VideoWriter(ConfigureInputOutput("Output"), VideoWriter::fourcc('X','2','6','4'),m_video_data.FPS_Rate, m_video_data.frameSize);
 
     //  Checking against the createability of output file
     if(!VideoWriter.isOpened()){
@@ -442,9 +394,68 @@ void VideoReadWrite::Video_Object::VideoWrite()
     //  Log message
     std::stringstream print_stream;
     print_stream << "Output file is written in the following directory: "
-    << std::endl << ConfigureInputOutput("Output", CONFIGURATION_VIDEO_IO);
+    << std::endl << ConfigureInputOutput("Output");
 
     info_printer(print_stream);
+}
+
+std::string VideoReadWrite::Video_Object::ConfigureInputOutput(const std::string &typeInputOutput)
+{      
+    std::string Result;
+    //  Configure input
+    if(typeInputOutput.compare("Input") == 0)
+    {
+        json inputConfig;
+        std::ifstream inputConfigFile(m_video_config_io);
+        if(!inputConfigFile.is_open())
+        {
+            std::cerr << m_host_info << " :\n"
+            << "Error: Failed to open input configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+            throw std::runtime_error("Error: Configuration file could not be opened.\n");
+        }
+        inputConfigFile >> inputConfig;
+        inputConfigFile.close();
+
+        Result = inputConfig["InputFile"];
+    }
+    //  Configure Output   
+    else if(typeInputOutput.compare("Output") == 0){
+        json outputConfig;
+        std::ifstream outputConfigFile(m_video_config_io);
+        if(!outputConfigFile.is_open())
+        {
+            std::cerr << m_host_info << " :\n"
+            << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+            throw std::runtime_error("Error: Configuration file could not be opened.\n");
+        }
+        outputConfigFile >> outputConfig;
+        outputConfigFile.close();
+
+        Result = outputConfig["OutputFile"];
+    }
+    //  Configure Detection Json file  
+    else if(typeInputOutput.compare("Detection") == 0){
+        json detectionConfig;
+        std::ifstream detectionConfigFile(m_video_config_io);
+        if(!detectionConfigFile.is_open())
+        {
+            std::cerr << m_host_info << " :\n"
+            << "Error: Failed to open output configuration file. Please make sure that json file is placed within ConfigFiles folder.\n";
+            throw std::runtime_error("Error: Configuration file could not be opened.\n");
+        }
+        detectionConfigFile >> detectionConfig;
+        detectionConfigFile.close();
+
+        Result = detectionConfig["Detection"];
+    }
+    //  False argument to the function
+    else{
+        std::cerr << m_host_info << " :\n"
+        << "Error: Input argument to the function ConfigureInputOutput is not correct. Correct usage is Input, Output, or Detection.\n";
+        throw std::runtime_error("Error: Wrong argument to functon ConfigureInputOutput.\n");
+    }
+
+    return Result;
 }
 
 //  This function serialises VideoData struct to an std::vector<uint8_t> and returns that object
@@ -521,4 +532,27 @@ void VideoReadWrite::Video_Object::info_printer(const std::string &print_message
 {
     std::cout << m_host_info <<
     print_message << std::endl;
+}
+
+//  Function added for compatibility : it allows one to redefine video io directory
+void VideoReadWrite::Video_Object::RedefineDirectory(std::string config_io)
+{
+    m_video_config_io = config_io;
+}
+
+VideoReadWrite::Video_Object &VideoReadWrite::Video_Object::operator=(const VideoReadWrite::Video_Object &other_video_object)
+{
+    if(this != &other_video_object){
+        if(m_video_config_io.compare(other_video_object.m_video_config_io) != 0)
+        {
+            m_video_config_io = other_video_object.m_video_config_io;
+        }
+
+        if(m_host_info.compare(other_video_object.m_host_info) != 0)
+        {
+            m_host_info = other_video_object.m_host_info;
+        }
+    }
+    
+    return *this;
 }
