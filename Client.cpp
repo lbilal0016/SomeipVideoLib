@@ -35,6 +35,11 @@ int main(int argc, char *argv[]) {
 
     app = vsomeip::runtime::get()->create_application("Client");
     set_application(app);   //  Added for compatibility when client functions are packed in another object code.
+
+    /*  Create the video object and send it to the library  */
+    Video_Object Video_IO(ConfigFile, "Client");
+    set_video_object(Video_IO);
+
     app->init();
     app->register_availability_handler(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID, on_availability);
     app->request_service(SAMPLE_SERVICE_ID, SAMPLE_INSTANCE_ID);

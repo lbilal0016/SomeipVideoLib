@@ -29,6 +29,10 @@ int main(int argc, char *argv[])
     std::string ConfigFile(argv[1]);
     VideoReadWrite::ReadConfigFile(ConfigFile);
 
+    /*  Create the video object and send it to the library  */
+    Video_Object Video_IO(ConfigFile, "Service");
+    set_video_object(Video_IO);
+
     app = vsomeip::runtime::get()->create_application("Server");
     app->init();
     app->register_message_handler(SAMPLE_SERVICE_ID,SAMPLE_INSTANCE_ID,SAMPLE_METHOD_ID, on_message);
