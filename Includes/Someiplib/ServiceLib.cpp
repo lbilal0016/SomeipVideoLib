@@ -143,7 +143,7 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
     std::vector<uint8_t> received_object_raw(message_payload->get_data(), message_payload->get_data() + len);
 
     /*  CREATING A DETECTION OBJECT WITH RAW DATA   */
-    Detection_Object received_object(received_object_raw);
+    Detection_Object received_object(received_object_raw, "Service");
     
     /*  DESERIALIZATION OF DETECTION OBJECT RAW DATA    */
     detected_object = received_object.GetDeserializedObjectData();

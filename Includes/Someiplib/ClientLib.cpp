@@ -188,7 +188,7 @@ void send_data(object_type_t &object_data) {
     std::vector<vsomeip::byte_t> payload_data;
 
     /*  CONSTRUCTING THE OBJECT TO BE SENT  */
-    Detection_Object object_to_send(object_data);
+    Detection_Object object_to_send(object_data, "Client");
 
     //  TEST OF SENDING DETECTED OBJECTS
     object_to_send.print_object();
