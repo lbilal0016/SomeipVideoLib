@@ -524,14 +524,14 @@ void VideoReadWrite::Video_Object::DeserialiseVideoData(const std::vector<uint8_
 
 void VideoReadWrite::Video_Object::info_printer(const std::stringstream &print_message)
 {
-    std::cout << m_host_info <<
-    print_message.str() << std::endl;
+    std::cout << m_host_info << " : "
+    << print_message.str() << std::endl;
 }
 
 void VideoReadWrite::Video_Object::info_printer(const std::string &print_message)
 {
-    std::cout << m_host_info <<
-    print_message << std::endl;
+    std::cout << m_host_info << " : "
+    << print_message << std::endl;
 }
 
 //  Function added for compatibility : it allows one to redefine video io directory
