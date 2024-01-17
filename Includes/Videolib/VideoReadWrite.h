@@ -97,6 +97,7 @@ class Video_Object
     private:
 
     std::string m_video_config_io;
+    //  std::string m_video_reconfig_io;    //  TODO : This member will be used to overload IO functions with a post-defined configuration file path
     std::string m_host_info;
     VideoData m_video_data;
 
