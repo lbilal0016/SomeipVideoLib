@@ -81,9 +81,15 @@ class Video_Object
 
     //  Reads the video capture object in the first argument into the second argument struct
     void VideoRead();
+
+    //  Function overload of VideoRead to read video from a different path
+    void VideoRead(std::string &other_io_path);
     
     //  Writes the second argument of video data struct into the first argument of videowriter object
     void VideoWrite();
+
+    //  Function overload of VideoWrite to write video to a different path
+    void VideoWrite(std::string &other_io_path);
 
     //  This function serialises VideoData struct to an std::vector<uint8_t> and returns that object
     std::vector<uint8_t> SerialiseVideoData();
@@ -97,7 +103,6 @@ class Video_Object
     private:
 
     std::string m_video_config_io;
-    //  std::string m_video_reconfig_io;    //  TODO : This member will be used to overload IO functions with a post-defined configuration file path
     std::string m_host_info;
     VideoData m_video_data;
 

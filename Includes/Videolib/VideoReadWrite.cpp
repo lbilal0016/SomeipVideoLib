@@ -370,10 +370,71 @@ void VideoReadWrite::Video_Object::VideoRead()
 }
 }
 
+//  Function overload of VideoRead to read video from a different path
+void VideoReadWrite::Video_Object::VideoRead(std::string &other_io_path)
+{
+    VideoCapture VideoCap(other_io_path);
+
+    //  Checking against opening the file
+    if(!VideoCap.isOpened()){
+        std::cerr << m_host_info << std::endl
+        <<"Error: Video file could not be opened.\n";
+        throw std::runtime_error("Error: Video file read is not successful.\n");
+    }   else{
+        //  Log message
+        info_printer("Video file opened successfully and is currently being read ...");
+
+    //  Reading the FPS Rate into the FPS_Rate attribute
+    m_video_data.FPS_Rate = VideoCap.get(cv::CAP_PROP_FPS);
+
+    m_video_data.frameSizeCaptured = false;   //  This flag will be set to 1 once the first frame size is captured
+    while(VideoCap.read(m_video_data.SingleFrame)){
+        if(!m_video_data.SingleFrame.empty()){ // Add the frame to Frames vector only if it is not empty
+        m_video_data.VideoFrames.push_back(m_video_data.SingleFrame.clone());
+        }
+        //  Saving the frame size for once
+        if(!m_video_data.frameSizeCaptured){
+            m_video_data.frameSize = m_video_data.SingleFrame.size();
+            m_video_data.frameSizeCaptured = true;    //  First video frame size is captured
+        }
+    }
+
+    //  Log message 
+    info_printer("Input video file is being successfully read.");
+}
+}
+
 void VideoReadWrite::Video_Object::VideoWrite()
 {
     //  1.  Creating the cv::VideoWriter object
     VideoWriter VideoWriter(ConfigureInputOutput("Output"), VideoWriter::fourcc('X','2','6','4'),m_video_data.FPS_Rate, m_video_data.frameSize);
+
+    //  Checking against the createability of output file
+    if(!VideoWriter.isOpened()){
+        std::cerr << m_host_info << std::endl
+        <<"Error: Creating an output video file is not successful.\n";
+        throw std::runtime_error("Error: Video file write is not successful.\n");
+    }//else{std::cout << "Creating the output video file is successful.\n";}
+
+    //  Writing the output file
+    info_printer("Writing the output ...");
+    for(const cv::Mat &frame : m_video_data.VideoFrames){
+        VideoWriter.write(frame);
+    }
+
+    //  Log message
+    std::stringstream print_stream;
+    print_stream << "Output file is written in the following directory: "
+    << std::endl << ConfigureInputOutput("Output");
+
+    info_printer(print_stream);
+}
+
+//  Function overload of VideoWrite to write video to a different path
+void VideoReadWrite::Video_Object::VideoWrite(std::string &other_io_path)
+{
+    //  1.  Creating the cv::VideoWriter object
+    VideoWriter VideoWriter(other_io_path, VideoWriter::fourcc('X','2','6','4'),m_video_data.FPS_Rate, m_video_data.frameSize);
 
     //  Checking against the createability of output file
     if(!VideoWriter.isOpened()){
