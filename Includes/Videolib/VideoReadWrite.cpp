@@ -283,22 +283,19 @@ void VideoReadWrite::Detection_Object::print_object() const
 {   
 
     /*  CONSOLE OUTPUT FOR DETECTED OBJECT */
-
+    std::cout << "Video service (" << m_host_info << ") : ";
     if(m_object.count != 1 && m_object.count > 0)
     {   //  Detected object has multiple instances
-        std::cout << m_host_info << " : "
-        << m_object.count << " objects of type : " << m_object.type <<
+        std::cout << m_object.count << " objects of type : " << m_object.type <<
         " are detected at time " << m_object.time << "s.\n";
     }
     else if(m_object.count == 0)
     {   //  There is a problem with the detection, so that an object has been detected with count = 0
-        std::cout << m_host_info << " : "
-        << "Error at detection, an object with no instance was identified!\n";
+        std::cout << "Error at detection, an object with no instance was identified!\n";
     }
     else
     {   //  A single object was detected
-        std::cout << m_host_info << " : "
-        << "An object of type : " << m_object.type <<
+        std::cout << "An object of type : " << m_object.type <<
         " is detected at time " << m_object.time << "s.\n";
     }
 }
@@ -524,13 +521,15 @@ void VideoReadWrite::Video_Object::DeserialiseVideoData(const std::vector<uint8_
 
 void VideoReadWrite::Video_Object::info_printer(const std::stringstream &print_message)
 {
-    std::cout << m_host_info << " : "
+    std::cout << "Video service ("
+    << m_host_info << ") : "
     << print_message.str() << std::endl;
 }
 
 void VideoReadWrite::Video_Object::info_printer(const std::string &print_message)
 {
-    std::cout << m_host_info << " : "
+    std::cout << "Video service ("
+    << m_host_info << ") : "
     << print_message << std::endl;
 }
 
