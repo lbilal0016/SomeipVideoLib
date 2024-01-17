@@ -103,15 +103,23 @@ print_stream << "Received message with Client/Session ["
 
 client_printer(print_stream);
 
-/*  Extract payload and write it on a local directory   */
+/*   THIS PART WILL BE REPLACED BY VIDEO OBJECT 
+//  Extract payload and write it on a local directory   
 
 VideoData receivedVideo = DeserialiseVideoData(received_video_raw);
+*/
+
+Video_Obj.DeserialiseVideoData(received_video_raw);
 
 //  log message
 client_printer("Video file is received and ready to be saved locally ...");
 //std::cout << "Client : Video file is received and ready to be saved locally...\n";
 
+/*   THIS PART WILL BE REPLACED BY VIDEO OBJECT 
 VideoWrite(receivedVideo);
+*/
+
+Video_Obj.VideoWrite(); //  This method overload is for writing the received video at default path
 
 //  remove the lock on the object detection after video is written successfully.
 condition_detection.notify_one();

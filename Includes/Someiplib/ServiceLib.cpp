@@ -71,11 +71,18 @@ void on_message(const std::shared_ptr<vsomeip::message>& Request)
     /*      READ THE INPUT FROM CONFIG AND PUT IT ON PAYLOAD    */
     //  Reading the input video file
     service_printer("Input file is being read ...");    //  log message
+
+    /*  THIS PART WILL BE REPLACED BY VIDEO OBJECT
     VideoData Payload_Video;    //  Create the container for video data 
     VideoRead(Payload_Video);   //  Read the input into this container for video data
 
-    /*  SERIALISE VIDEO DATA AND LOAD IT INTO AN STD::VECTOR<UINT8_T> OBJECT   */
+    //  SERIALISE VIDEO DATA AND LOAD IT INTO AN STD::VECTOR<UINT8_T> OBJECT   
     std::vector<uint8_t> raw_video = SerialiseVideoData(Payload_Video);
+    */
+
+    Video_Obj.VideoRead();  //  This method is for reading the video at the default video IO path
+
+    std::vector<uint8_t> raw_video = Video_Obj.SerialiseVideoData();
 
     /*  CREATE RESPONSE    */  
     std::shared_ptr<vsomeip::message> response = vsomeip::runtime::get()->create_response(Request);
