@@ -120,7 +120,7 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
    std::stringstream message;
    std::stringstream print_stream;
 
-   message << "SERVICE: A notification for event [" << 
+   message << "A notification for event [" << 
    std::setw(4) << std::setfill('0') << std::hex <<
    event_message->get_service() << "." << 
    event_message->get_instance() << "." <<
@@ -160,7 +160,7 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
         detected_object.count != detected_object_old.count ||
         detected_object.time != detected_object_old.time)
     {
-    std::cout << "Content: ";
+    std::cout << "Content = ";
     received_object.print_object();
     }
 
@@ -168,8 +168,6 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
     detected_object_old.type = detected_object.type;
     detected_object_old.count = detected_object.count;
     detected_object_old.time = detected_object.time;
-
-    //received_object.~Detection_Object();
 }
 
 void run_events()
