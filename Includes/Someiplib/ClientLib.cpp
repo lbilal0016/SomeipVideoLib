@@ -45,15 +45,13 @@ void set_video_object(Video_Object &video_obj)
 //  This function will be run on the client side after the service is offered
 void run()
 {
-    client_printer("run() : ");
     std::unique_lock<std::mutex> lock(mutex);
     condition.wait(lock);
-    client_printer("lock is removed.");
+    client_printer("Video service is available on the server side, detection program is launched.");
 
-    //  Creating the object for vsome request message
     std::shared_ptr<vsomeip::message> request;
     request = vsomeip::runtime::get()->create_request();
-    //  Setting service id, instance id, method id
+
     request->set_service(SAMPLE_SERVICE_ID);
     request->set_instance(SAMPLE_INSTANCE_ID);
     request->set_method(SAMPLE_METHOD_ID);
@@ -66,34 +64,35 @@ void run()
     request->set_reliable(false);
     #endif
 
-    //  Create and add payload to someip message object
+
     std::shared_ptr<vsomeip::payload> its_payload = vsomeip::runtime::get()->create_payload();
-    //      Creating the vector to carry bytes
     std::vector<vsomeip::byte_t> payload_data;
 
-    //      Filling the vector with random data (for training purposes)
-    for(vsomeip::byte_t i = 0; i<10; ++i)
+    std::string video_request("Request: Default Video.");
+    std::vector<uint8_t> video_request_vector(video_request.begin(), video_request.end());
+
+    //  Set payload data
+    for(const auto &data : video_request_vector)
     {
-        payload_data.push_back(i % 256);
+        payload_data.push_back(data);
     }
 
-    //      Loading the data vector to someip payload
+    //  Set payload
     its_payload->set_data(payload_data);
     
-    //      Adding the payload to someip message
+    //  Set message
     request->set_payload(its_payload);
     this_app->send(request);
 }
 
 void on_message(const std::shared_ptr<vsomeip::message> &response)
 {
-client_printer("on_message() : ");
-std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();    //  Read the someip message payload to the its_payload variable
-vsomeip::length_t len = its_payload->get_length();  //  extracting the length of the payload
+std::shared_ptr<vsomeip::payload> its_payload = response->get_payload();    //  get payload
+vsomeip::length_t len = its_payload->get_length();  //  extract payload length for console output
 
-std::vector<uint8_t> received_video_raw(its_payload->get_data(), its_payload->get_data() + len);    //  extracting the raw bytes
+std::vector<uint8_t> received_video_raw(its_payload->get_data(), its_payload->get_data() + len);    //  extract the raw bytes
 
-//  Print the received data
+//  Prepare received data information
 std::stringstream print_stream;
 print_stream << "Received message with Client/Session ["
 <<  std::setw(4) << std::setfill('0') << std::hex
@@ -101,45 +100,34 @@ print_stream << "Received message with Client/Session ["
 <<  std::setw(4) << std::setfill('0') << std::hex
 <<  response->get_session() << "]" << std::endl;
 
+//  Console print for received message information
 client_printer(print_stream);
 
-/*   THIS PART WILL BE REPLACED BY VIDEO OBJECT 
-//  Extract payload and write it on a local directory   
-
-VideoData receivedVideo = DeserialiseVideoData(received_video_raw);
-*/
-
+//  Process raw video data (deserialisation)
 Video_Obj.DeserialiseVideoData(received_video_raw);
 
 //  log message
 client_printer("Video file is received and ready to be saved locally ...");
-//std::cout << "Client : Video file is received and ready to be saved locally...\n";
 
-/*   THIS PART WILL BE REPLACED BY VIDEO OBJECT 
-VideoWrite(receivedVideo);
-*/
+Video_Obj.VideoWrite(); //  Video write to default path
 
-Video_Obj.VideoWrite(); //  This method overload is for writing the received video at default path
-
-//  remove the lock on the object detection after video is written successfully.
+//  Remove lock for detection thread
 condition_detection.notify_one();
 }
 
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
 {
-    client_printer("on_availability() : ");
-
-//  Checking the availability of the service offered by the server
-
 std::stringstream print_stream;
 print_stream << "Service (Service.Instance) [" << std::setw(4) << std::setfill('0') << std::hex 
 << Service << "." << Instance << "] is " << (is_available ? "available" : "NOT available") << std::endl;
 
 client_printer(print_stream);
+print_stream.str("");   //  Cleanup print_stream
 
 if(is_available){
 //  Sending wake-up call for the waiting thread on the client side after the service is available
-client_printer("on_availability : service is available, condition lock will now be removed.");
+print_stream << "Service " << Service <<" is available.";
+client_printer(print_stream);
 condition.notify_one();
 }
 }
@@ -156,30 +144,25 @@ void run_detection()
     std::unique_lock<std::mutex> lock_detection(mutex);
     condition_detection.wait(lock_detection);
     
-    //  lock for the object detection is removed
     client_printer("Object detection is running ...");
 
-    /*  FURTHER STEPS: 
-
-    1.  Engineer a function for checking whether the received video can be opened */
+    //  Check against the openability of the received video
     std::string Path_to_video = ConfigureInputOutput("Output", CONFIGURATION_VIDEO_DETECTION);
     CheckVideoFile(Path_to_video);
+    
+    //  Optional further step   :   Open received video here
 
-    /*
-    2. Obtain the json configuration file for object detection*/ 
+    //  Obtain the json configuration file for object detection*/ 
     std::string Path_to_detection_Json = ConfigureInputOutput("Detection", CONFIGURATION_VIDEO_DETECTION);
     std::stringstream print_stream;
     print_stream << "Path_to_detection_Json was configured as : " << Path_to_detection_Json << std::endl;
     client_printer(print_stream);
 
-    /*
-    3.  Using the configuration file, carry out detection process*/
+    //  Carry out object detection
     std::vector<object_type_t> detected_objects;
     DetectObjectsFromJson(Path_to_detection_Json, detected_objects);
 
-    /*
-    4.  Call the send_data function to send the quasi-detected objects and their quantities as events   */
-    
+    //  Call the send_data function to send the quasi-detected objects and their quantities as events    
     for (auto& objects : detected_objects)
     {
         client_printer("Sending data ...");
@@ -189,16 +172,16 @@ void run_detection()
 
 void send_data(object_type_t &object_data) {
 
-    /*  CREATE PAYLOAD OBJECT   */
+    //  CREATE PAYLOAD OBJECT   
     std::shared_ptr<vsomeip::payload> payload = vsomeip::runtime::get() -> create_payload();
 
-    /*  CREATE A VECTOR CONTAINER FOR PAYLOAD DATA  */
+    //  CREATE A VECTOR CONTAINER FOR PAYLOAD DATA  
     std::vector<vsomeip::byte_t> payload_data;
 
-    /*  CONSTRUCTING THE OBJECT TO BE SENT  */
+    //  CONSTRUCTING THE OBJECT TO BE SENT  
     Detection_Object object_to_send(object_data, "Client");
 
-    //  TEST OF SENDING DETECTED OBJECTS
+    //  CONSOLE OUTPUT OF SENT OBJECTS
     object_to_send.print_object();
 
     std::vector<uint8_t> payload_vector = object_to_send.GetSerializedObjectData();
@@ -210,6 +193,7 @@ void send_data(object_type_t &object_data) {
 
     payload->set_data(payload_data);
     
+    //  SEND NOTIFICATION FOR EVENT UPDATE
     this_app->notify(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, payload);
     object_to_send.~Detection_Object();
 }
