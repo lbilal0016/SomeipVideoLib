@@ -138,8 +138,9 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
     message << "(" << std::dec << len << ") ";
     for (uint32_t i = 0; i < len; ++i){
         message << std::hex << std::setw(2) << std::setfill('0')
-        << (int) message_payload->get_data()[i] << " ";
+        << (int) message_payload->get_data()[i] << "  ";
     }
+    message << "= ";
     print_stream << message.str();
     service_printer(print_stream);
 
@@ -160,7 +161,6 @@ void on_message_event(const std::shared_ptr<vsomeip::message>& event_message)
         detected_object.count != detected_object_old.count ||
         detected_object.time != detected_object_old.time)
     {
-    std::cout << "Content = ";
     received_object.print_object();
     }
 
