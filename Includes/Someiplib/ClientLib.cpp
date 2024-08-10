@@ -83,6 +83,7 @@ void run()
     //  Set message
     request->set_payload(its_payload);
     this_app->send(request);
+    Video_Obj.startTimeMeasurement();   //  start time measurement from the request of video
 }
 
 void on_message(const std::shared_ptr<vsomeip::message> &response)
@@ -99,20 +100,39 @@ print_stream << "Received message with Client/Session ["
 <<  response->get_client() << "/"
 <<  std::setw(4) << std::setfill('0') << std::hex
 <<  response->get_session() << "]" << std::endl;
+print_stream.str("");   //  reset print_stream content
 
 //  Console print for received message information
-client_printer(print_stream);
-
-//  Process raw video data (deserialisation)
-Video_Obj.DeserialiseVideoData(received_video_raw);
+client_printer(print_stream);  
 
 //  log message
 client_printer("Video file is received and ready to be saved locally ...");
 
+//  Measure elapsed time from request to receive
+Video_Obj.endTimeMeasurement();
+print_stream << "Time elapsed from sending video request to reception of raw video data: " <<
+static_cast<double>(Video_Obj.getElapsedTime().count()) << "ms." << std::endl;
+client_printer(print_stream);
+print_stream.str("");   //  reset print_stream content
+
+//  Start another time measurement for deserialisation and video writing
+Video_Obj.startTimeMeasurement();
+
+//  Process raw video data (deserialisation)
+Video_Obj.DeserialiseVideoData(received_video_raw);
+
+//  Video writing
 Video_Obj.VideoWrite(); //  Video write to default path
+
+//  End measurement for deserialisation and writing
+Video_Obj.endTimeMeasurement();
+print_stream << "Time elapsed from video reception to reproduction of video data: " <<
+static_cast<double>(Video_Obj.getElapsedTime().count()) << "ms." << std::endl;
+client_printer(print_stream);
 
 //  Remove lock for detection thread
 condition_detection.notify_one();
+*is_detection_permitted = true; 
 }
 
 void on_availability(vsomeip::service_t Service, vsomeip::instance_t Instance, bool is_available)
@@ -195,7 +215,7 @@ void send_data(object_type_t &object_data) {
     
     //  SEND NOTIFICATION FOR EVENT UPDATE
     this_app->notify(EVENT_SERVICE_ID, EVENT_INSTANCE_ID, EVENT_ID, payload);
-    object_to_send.~Detection_Object();
+    //object_to_send.~Detection_Object();   //  Don't uncomment, it causes to crash (memory leak)!!!
 }
 
 void offer_client_event()
@@ -232,4 +252,9 @@ void on_message_event(const std::shared_ptr<vsomeip::message> &response)
     << response->get_session() << "]"
     << string.str() << std::endl;
     client_printer(print_string);
+}
+
+void set_detection_flag(bool *detection_holder)
+{
+    is_detection_permitted = detection_holder;
 }
