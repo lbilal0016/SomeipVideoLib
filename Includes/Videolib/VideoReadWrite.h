@@ -97,6 +97,15 @@ class Video_Object
     //  This function deserialises an std::vector<uint8_t> which carries a VideoData struct, and returns this VideoData struct
     void DeserialiseVideoData(const std::vector<uint8_t> &raw_video_vector);
 
+    //  Function to start the measurement of time
+    void startTimeMeasurement();
+
+    //  Function to end the measurement of time and calculate the elapsed time
+    void endTimeMeasurement();
+
+    //  Getter for elapsed time
+    std::chrono::milliseconds getElapsedTime();
+
     Video_Object &operator=(const Video_Object &other_video_object);
     ~Video_Object();    //  deconstructor
 
@@ -106,6 +115,11 @@ class Video_Object
     std::string m_host_info;
     VideoData m_video_data;
 
+    //  Additional members to measure elapsed time
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_start_time;
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_end_time;
+    std::chrono::milliseconds m_elapsed_time;
+
     //  Configure the json file for reading the directory information
     std::string ConfigureInputOutput(const std::string &typeInputOutput);
 
@@ -113,6 +127,8 @@ class Video_Object
     void info_printer(const std::stringstream &print_message);
     //  Function overload for previous function with std::string type
     void info_printer(const std::string &print_message);
+
+
 };
 
 //  Namespace VideoReadWrite end

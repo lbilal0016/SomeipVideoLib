@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdexcept>
 #include <string.h>
+#include <chrono>
 
 #include "VideoReadWrite.h"
 #include <nlohmann/json.hpp>
@@ -407,7 +408,7 @@ void VideoReadWrite::Video_Object::VideoRead(std::string &other_io_path)
 void VideoReadWrite::Video_Object::VideoWrite()
 {
     //  1.  Creating the cv::VideoWriter object
-    VideoWriter VideoWriter(ConfigureInputOutput("Output"), VideoWriter::fourcc('X','2','6','4'),m_video_data.FPS_Rate, m_video_data.frameSize);
+    VideoWriter VideoWriter(ConfigureInputOutput("Output"), VideoWriter::fourcc('A','V','C','1'),m_video_data.FPS_Rate, m_video_data.frameSize);
 
     //  Checking against the createability of output file
     if(!VideoWriter.isOpened()){
@@ -434,7 +435,7 @@ void VideoReadWrite::Video_Object::VideoWrite()
 void VideoReadWrite::Video_Object::VideoWrite(std::string &other_io_path)
 {
     //  1.  Creating the cv::VideoWriter object
-    VideoWriter VideoWriter(other_io_path, VideoWriter::fourcc('X','2','6','4'),m_video_data.FPS_Rate, m_video_data.frameSize);
+    VideoWriter VideoWriter(other_io_path, VideoWriter::fourcc('A','V','C','1'),m_video_data.FPS_Rate, m_video_data.frameSize);
 
     //  Checking against the createability of output file
     if(!VideoWriter.isOpened()){
@@ -615,4 +616,21 @@ VideoReadWrite::Video_Object &VideoReadWrite::Video_Object::operator=(const Vide
     }
     
     return *this;
+}
+
+
+
+/*  ADDITIONAL FUNCTIONS TO HELP MEASURE ELAPSED TIME */
+void VideoReadWrite::Video_Object::startTimeMeasurement(){
+    m_start_time = std::chrono::high_resolution_clock::now();
+}
+
+void VideoReadWrite::Video_Object::endTimeMeasurement(){
+    m_end_time = std::chrono::high_resolution_clock::now();
+
+    m_elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(m_end_time - m_start_time);
+}
+
+std::chrono::milliseconds VideoReadWrite::Video_Object::getElapsedTime(){
+    return m_elapsed_time;
 }
